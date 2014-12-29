@@ -11,35 +11,45 @@ screen: 1920 x 1080
 print("[awesome] Entered awesome.lua: "..os.date())
 
 -- Standard awesome library
-local gears = require("gears")
-local awful = require("awful")
-awful.rules = require("awful.rules")
+local gears       = require("gears")
+local awful       = require("awful")
+awful.rules       = require("awful.rules")
 require("awful.autofocus")
 -- Widget and layout library
-local wibox = require("wibox")
+local wibox       = require("wibox")
 -- Theme handling library
-local beautiful = require("beautiful")
+local beautiful   = require("beautiful")
 -- Notification library
-local naughty = require("naughty")
-local menubar = require("menubar")
-local tyrannical = require("tyrannical")
+local _dbus       = dbus
+dbus              = nil
+local naughty     = require("naughty")
+dbus              = _dbus
+local menubar     = require("menubar")
+local tyrannical  = require("tyrannical")
 -- widget library
-local vicious = require("vicious")
-vicious.contrib = require("vicious.contrib")
+local vicious     = require("vicious")
+vicious.contrib   = require("vicious.contrib")
 --local lognotify = require("lognotify")
 -- calendar widget
-local cal    = require("utils.cal")
+local cal         = require("utils.cal")
 -- wrapper for pango markup
-local markup = require("utils.markup")
+local markup      = require("utils.markup")
 -- scan for wlan accesspoints using iwlist
-local iwlist = require("utils.iwlist")
+local iwlist      = require("utils.iwlist")
 -- MPD widget based on mpd.lua
-local wimpd  = require("utils.wimpd")
-local mpc = wimpd.new()
+local wimpd       = require("utils.wimpd")
+local mpc         = wimpd.new()
+local drop        = require("scratchdrop")
+local dmenu       = require("dmenu")
+local lain        = require("lain")
+-- local scratch = require("scratch")
+-- local quake = require("quake")
+require("quake")
 
 -- enable luajit
 pcall(function() jit.on() end)
 -- }}}
+
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -70,7 +80,8 @@ end
 -- Themes define colours, icons, font and wallpapers.
 --local theme_path = "/usr/share/awesome/themes/default/theme.lua"
 --local theme_path = "/usr/share/awesome/themes/sky/theme.lua"
-local theme_path = awful.util.getdir("config").."/foobar/theme.lua"
+-- local theme_path = awful.util.getdir("config").."/foobar/theme.lua"
+local theme_path = awful.util.getdir("config").."/themes/steamburn/theme.lua"
 
 beautiful.init(theme_path)
 
@@ -84,9 +95,30 @@ local spawn_with_systemd = function(app)
 end
 local terminal   = os.getenv("TERMINAL") or "urxvt"
 local editor     = os.getenv("EDITOR") or "vim"
-local browser    = os.getenv("BROWSER") or "chromium"
+local browser    = os.getenv("BROWSER") or "firefox"
 local mail       = "thunderbird"
 local editor_cmd = terminal.." -e "..editor
+local configpath = os.getenv("HOME") .. "/.config/awesome/"
+
+local quakeconsole = {}
+for s = 1, screen.count() do
+   quakeconsole[s] = quake({ terminal = terminal,
+           name = "scratchpad",
+           height = 0.3,
+           screen = s })
+end
+
+mydmenu = dmenu({
+  chromium = "chromium  --force-device-scale-factor=1.8",
+  mc = terminal .. " -e mc",
+  vim = terminal .. " -e vim",
+  urxvt = function()
+    local matcher = function (c)
+      return awful.rules.match(c, {class = 'scratchpad'})
+    end
+    awful.client.run_or_raise(exec, matcher)
+  end
+})
 
 -- Default modkey.
 -- Usually, Mod4 is the key with a logo between Control and Alt.
@@ -98,7 +130,7 @@ local modkey2   = "Mod1"
 local icon_path = awful.util.getdir("config").."/icons/"
 
 -- Table of layouts to cover with awful.layout.inc, order matters.
-awful.layout.layouts = {
+layouts = {
   awful.layout.suit.tile,               -- 1
   awful.layout.suit.tile.left,          -- 2
   awful.layout.suit.tile.bottom,        -- 3
@@ -137,7 +169,7 @@ tyrannical.tags = {
     layout = awful.layout.suit.tile,
     exec_once = { "systemctl --user start "..browser },
     class = { "Firefox", "Opera", "Chromium", "Aurora", "birdie",
-      "Thunderbird", "evolution" },
+      "Thunderbird", "evolution", "dwb" },
   },
   {
     name = "2:dev",
@@ -146,7 +178,7 @@ tyrannical.tags = {
     init = true,
     screen = 1,
     layout = awful.layout.suit.tile,
-    exec_once = { spawn_with_systemd(terminal) },
+    -- exec_once = { spawn_with_systemd(terminal) },
     class       = {
       "xterm" , "urxvt" , "aterm", "URxvt", "XTerm"
     },
@@ -158,10 +190,9 @@ tyrannical.tags = {
     name = "3:im",
     position = 3,
     exclusive = true,
-    mwfact = 0.25,
+    mwfact = 0.2,
     init = true,
-    layout = awful.layout.suit.tile,
-    exec_once = { spawn_with_systemd("gajim") },
+    layout = awful.layout.suit.tile.left_layout2,
     class = { "Kopete", "Pidgin", "gajim" }
   },
   {
@@ -170,7 +201,7 @@ tyrannical.tags = {
     exclusive = true,
     init = false,
     layout = awful.layout.suit.max,
-    class = { "Evince", "GVim", "keepassx", "libreoffice" }
+    class = { "Evince", "GVim", "keepassx", "KeePass2", "libreoffice" }
   },
   {
     name = "5:java",
@@ -178,7 +209,7 @@ tyrannical.tags = {
     exclusive = true,
     init = false,
     layout = awful.layout.suit.tile,
-    class = { "Eclipse", "NetBeans IDE", "jetbrains%-idea%-ce" }
+    class = { "Eclipse", "NetBeans IDE", "jetbrains%-idea%-ce", "sun-awt-X11-XFramePeer" }
   },
   {
     name = "d:own",
@@ -243,24 +274,26 @@ tyrannical.tags = {
 }
 
 tyrannical.properties.intrusive = {
-  "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "Wicd", "Valauncher"
+  "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "Wicd", "Valauncher", "scratchpad", "mpv"
 }
 
 tyrannical.properties.ontop = {
-  "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "Wicd", "Valauncher", "MPlayer", "pinentry"
+  "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "Wicd", "Valauncher", "MPlayer", "mpv", "pinentry", "scratchpad" 
 }
 
 tyrannical.properties.floating = {
-  "MPlayer", "pinentry"
+  "MPlayer", "Mpv", "pinentry", "scratchpad"
 }
 
-full_screen_apps = {"Firefox", "Opera", "Chromium", "Aurora", "Thunderbird", "evolution"}
+full_screen_apps = {"Firefox", "dwb", "Opera", "Chromium", "Aurora", "Thunderbird", "evolution"}
 
+tyrannical.settings.group_children = true
+tyrannical.settings.block_children_focus_stealing = true --Block popups ()
 tyrannical.properties.maximized_horizontal = full_screen_apps
 tyrannical.properties.maximized_vertical = full_screen_apps
 
 tyrannical.properties.size_hints_honor = {
-  xterm = false, URxvt = false, aterm = false
+  xterm = false, URxvt = false, aterm = false, scratchpad = false
 }
 
 --}}}
@@ -319,7 +352,7 @@ print("[awesome] initialize vicious")
 -- Create a textclock widget
 local mytextclock = awful.widget.textclock()
 local clockicon = wibox.widget.imagebox()
-clockicon:set_image(icon_path.."clock.png")
+clockicon:set_image(beautiful.widget_clock)
 -- Register calendar tooltip
 -- To use fg_focus, you have to set a different tooltip_fg_color since the
 -- default is already beautiful.fg_focus.
@@ -334,25 +367,23 @@ mytextclock:connect_signal("mouse::enter",  function()
 end)
 -- }}}
 
-local testwidget = wibox.widget.textbox()
-
 -- {{{ Battery
 local batwidget = wibox.widget.textbox()
 local bat2widget = wibox.widget.textbox()
 local baticon   = wibox.widget.imagebox()
-baticon:set_image(icon_path.."bat.png")
+baticon:set_image(beautiful.widget_battery)
 
 
-vicious.register(batwidget, vicious.widgets.bat, "$1$2% $3h", 7, "BAT1")
-vicious.register(bat2widget, vicious.widgets.bat, "$1$2% $3h", 7, "BAT0")
+vicious.register(batwidget, vicious.widgets.bat, "$1$2% $3h", 7, "BAT0")
+-- vicious.register(bat2widget, vicious.widgets.bat, "$1$2% $3h", 7, "ADP1")
 -- }}}
 
 --{{{ Pulseaudio
 local pulseicon = wibox.widget.imagebox()
-pulseicon:set_image(icon_path.."volume.png")
+pulseicon:set_image(beautiful.widget_vol)
 -- Initialize widgets
-local pulsewidget = wibox.widget.textbox()
 local pulsebar    = awful.widget.progressbar()
+local pulsewidget = wibox.widget.textbox()
 local pulsebox    = wibox.layout.margin(pulsebar, 2, 2, 4, 4)
 
 -- Progressbar properties
@@ -380,11 +411,13 @@ local function pulse_toggle()
   vicious.force({ pulsewidget, pulsebar})
 end
 
-vicious.register(pulsebar, vicious.contrib.pulse, "$1", 7)
-vicious.register(pulsewidget, vicious.contrib.pulse,
-function (widget, args)
-  return string.format("%.f%%", args[1])
-end, 7, "alsa_output.pci-0000_00_1b.0.analog-stereo")
+-- vicious.register(pulsebar, vicious.contrib.pulse, "$1", 7)
+vicious.register(pulsebar, vicious.widgets.volume, "$1", 2, "Master")
+vicious.register(pulsewidget, vicious.widgets.volume, " $1% ", 2, "Master")
+-- vicious.register(pulsewidget, vicious.contrib.pulse,
+-- function (widget, args)
+--   return string.format("%.f%%", args[1])
+-- end, 7, "alsa_output.pci-0000_00_1b.0.analog-stereo")
 
 pulsewidget:buttons(awful.util.table.join(
   awful.button({ }, 1, function() awful.util.spawn("pavucontrol") end), --left click
@@ -399,7 +432,7 @@ pulseicon:buttons(pulsewidget:buttons())
 -- {{{ CPU usage
 local cpuwidget = wibox.widget.textbox()
 local cpuicon = wibox.widget.imagebox()
-cpuicon:set_image(icon_path.."cpu.png")
+cpuicon:set_image(beautiful.widget_cpu)
 -- Initialize widgets
 vicious.register(cpuwidget, vicious.widgets.cpu,
 function (widget, args)
@@ -429,7 +462,7 @@ cpuicon:buttons( cpuwidget:buttons() )
 -- {{{ CPU temperature
 local thermalwidget = wibox.widget.textbox()
 local thermalicon = wibox.widget.imagebox()
-thermalicon:set_image(icon_path.."temp.png")
+thermalicon:set_image(beautiful.widget_temp)
 vicious.register(thermalwidget, vicious.widgets.thermal, "$1°C", 7, {"thermal_zone0", "sys"})
 -- }}}
 
@@ -437,7 +470,7 @@ vicious.register(thermalwidget, vicious.widgets.thermal, "$1°C", 7, {"thermal_z
 -- Initialize widget
 local memwidget = wibox.widget.textbox()
 local memicon = wibox.widget.imagebox()
-memicon:set_image(icon_path.."mem.png")
+memicon:set_image(beautiful.widget_mem)
 vicious.register(memwidget, vicious.widgets.mem, "$2MB/$3MB ", 7)
 -- Register buttons
 memwidget:buttons( cpuwidget:buttons() )
@@ -447,29 +480,16 @@ memicon:buttons( cpuwidget:buttons() )
 -- {{{ Net usage
 local netwidget = wibox.widget.textbox()
 local neticon  = wibox.widget.imagebox()
-neticon:set_image(icon_path.."netio.png")
-vicious.register(netwidget, vicious.widgets.net,
-function (widget, args)
- local down, up
- if args["{enp0s25 down_kb}"] ~= "0.0" or args["{enp0s25 up_kb}"] ~= "0.0" then
-    down, up = args["{enp0s25 down_kb}"], args["{enp0s25 up_kb}"]
- elseif args["{wlp3s0 down_kb}"] ~= "0.0" or args["{wlp3s0 up_kb}"] ~= "0.0" then
-    down, up = args["{wlp3s0 down_kb}"], args["{wlp3s0 up_kb}"]
- else
-   neticon.visible = false
-   return ""
- end
- neticon.visible = true
- return string.format("%skb/%skb", up, down)
-end, 7)
--- Register buttons
+neticon:set_image(beautiful.widget_net)
+-- Register widget
+vicious.register(netwidget, vicious.widgets.net, '<span color="#CC9393">${wlp3s0 down_kb}</span> <span color="#7F9F7F">${wlp3s0 up_kb}</span>', 7)
 netwidget:buttons( awful.button({ }, 1, function () awful.util.spawn(terminal .. " -e sudo nethogs -d 2 -p wlp3s0") end) )
 neticon:buttons( netwidget:buttons() )
 -- }}}
 
 -- {{{ Disk I/O
 local ioicon = wibox.widget.imagebox()
-ioicon:set_image(icon_path.."disk.png")
+ioicon:set_image(beautiful.widget_hdd)
 ioicon.visible = true
 local iowidget = wibox.widget.textbox()
 vicious.register(iowidget, vicious.widgets.dio, "SSD ${sda read_mb}/${sda write_mb}MB", 7)
@@ -513,7 +533,7 @@ pkgicon:buttons( pkgwidget:buttons() )
 -- {{{ MPD
 local wimpc = wibox.widget.textbox()
 local mpcicon = wibox.widget.imagebox()
-mpcicon:set_image(icon_path.."music.png")
+mpcicon:set_image(beautiful.widget_music)
 mpc.attach(wimpc)
 
 -- Register Buttons in both widget
@@ -531,17 +551,18 @@ local wifiwidget = wibox.widget.textbox()
 local wifiicon   = wibox.widget.imagebox()
 local wifitooltip= awful.tooltip({})
 wifitooltip:add_to_object(wifiwidget)
-wifiicon:set_image(icon_path.."wifi.png")
-vicious.register(wifiwidget, vicious.widgets.wifi, function(widget, args)
-local tooltip = ("<b>mode</b> %s <b>chan</b> %s <b>rate</b> %s Mb/s"):format(
-                args["{mode}"], args["{chan}"], args["{rate}"])
-local quality = 0
-if args["{linp}"] > 0 then
-  quality = args["{link}"] / args["{linp}"] * 100
-end
-wifitooltip:set_text(tooltip)
-return ("%s: %.1f%%"):format(args["{ssid}"], quality)
-end, 5, "wlp3s0")
+wifiicon:set_image(beautiful.widget_net)
+vicious.register(wifiwidget, vicious.widgets.wifi,
+  function(widget, args)
+    local tooltip = ("<b>mode</b> %s <b>chan</b> %s <b>rate</b> %s Mb/s"):format(
+    args["{mode}"], args["{chan}"], args["{rate}"])
+    local quality = 0
+    if args["{linp}"] > 0 then
+      quality = args["{link}"] / args["{linp}"] * 100
+    end
+    wifitooltip:set_text(tooltip)
+    return ("%s: %.1f%%"):format(args["{ssid}"], quality)
+  end, 5, "wlp3s0")
 wifiicon:buttons( wifiwidget:buttons(awful.util.table.join(
 awful.button({}, 1, function()
 local networks = iwlist.scan_networks("wlp3s0")
@@ -571,7 +592,7 @@ awful.button({ }, 3, function ()  vicious.force{wifiwidget} end) -- right click
 print("[awesome] initialize wibox")
 
 -- Create a wibox for each screen and add it
-local mywibox = {}
+mywibox = {}
 local mystatusbox = {}
 local mypromptbox = {}
 local mylayoutbox = {}
@@ -630,10 +651,10 @@ for s = 1, screen.count() do
   -- We need one layoutbox per screen.
   mylayoutbox[s] = awful.widget.layoutbox(s)
   mylayoutbox[s]:buttons(awful.util.table.join(
-       awful.button({ }, 1, function () awful.layout.inc(1) end),
-       awful.button({ }, 3, function () awful.layout.inc(-1) end),
-       awful.button({ }, 4, function () awful.layout.inc(1) end),
-       awful.button({ }, 5, function () awful.layout.inc(-1) end)))
+       awful.button({ }, 1, function () awful.layout.inc(layouts, 1) end),
+       awful.button({ }, 3, function () awful.layout.inc(layouts, -1) end),
+       awful.button({ }, 4, function () awful.layout.inc(layouts, 1) end),
+       awful.button({ }, 5, function () awful.layout.inc(layouts, -1) end)))
   -- Create a taglist widget
   mytaglist[s] = awful.widget.taglist(s, awful.widget.taglist.filter.all, mytaglist.buttons)
 
@@ -646,6 +667,7 @@ for s = 1, screen.count() do
   left_layout:add(mylauncher)
   left_layout:add(mytaglist[s])
   left_layout:add(mypromptbox[s])
+  left_layout:add(mydmenu.textbox)
 
   local right_layout = wibox.layout.fixed.horizontal()
   if s == 1 then right_layout:add(wibox.widget.systray()) end
@@ -653,10 +675,10 @@ for s = 1, screen.count() do
   right_layout:add(wifiwidget)
   right_layout:add(baticon)
   right_layout:add(batwidget)
-  right_layout:add(bat2widget)
+  -- right_layout:add(bat2widget)
   right_layout:add(pulseicon)
-  right_layout:add(pulsewidget)
   right_layout:add(pulsebox)
+  right_layout:add(pulsewidget)
   right_layout:add(clockicon)
   right_layout:add(mytextclock)
   right_layout:add(mylayoutbox[s])
@@ -670,8 +692,6 @@ for s = 1, screen.count() do
 
   mystatusbox[s] = awful.wibox({ position = "bottom", screen = s })
   local left_layout2 = wibox.layout.fixed.horizontal()
-
-  left_layout2:add(testwidget)
 
   left_layout2:add(cpuicon)
   left_layout2:add(cpuwidget)
@@ -741,6 +761,8 @@ local globalkeys = awful.util.table.join(
   awful.key({ modkey, "Control" }, "j", function () awful.screen.focus_relative( 1) end),
   awful.key({ modkey, "Control" }, "k", function () awful.screen.focus_relative(-1) end),
   awful.key({ modkey,           }, "u", awful.client.urgent.jumpto),
+  awful.key({ modkey,           }, "`", function () quakeconsole[mouse.screen]:toggle() end),
+  -- awful.key({ modkey,           }, "`", function () drop(terminal .. " -name scratchpad") end),
   awful.key({ modkey,           }, "Tab",
      function ()
        awful.client.focus.history.previous()
@@ -760,7 +782,7 @@ local globalkeys = awful.util.table.join(
   awful.key({ modkey, "Control" }, "r", awesome.restart),
   awful.key({ modkey, "Shift"   }, "q", awesome.quit),
   -- lockscreen
-  awful.key({ modkey, "Shift"   }, "s", function () awful.util.spawn("slimlock") end),
+  awful.key({ modkey, "Shift"   }, "l", function () awful.util.spawn("slimlock") end),
 
   awful.key({ modkey,           }, "l",     function () awful.tag.incmwfact( 0.05)    end),
   awful.key({ modkey,           }, "h",     function () awful.tag.incmwfact(-0.05)    end),
@@ -768,14 +790,18 @@ local globalkeys = awful.util.table.join(
   awful.key({ modkey, "Shift"   }, "l",     function () awful.tag.incnmaster(-1)      end),
   awful.key({ modkey, "Control" }, "h",     function () awful.tag.incncol( 1)         end),
   awful.key({ modkey, "Control" }, "l",     function () awful.tag.incncol(-1)         end),
-  awful.key({ modkey,           }, "space", function () awful.layout.inc(1) end),
-  awful.key({ modkey, "Shift"   }, "space", function () awful.layout.inc(-1) end),
+  awful.key({ modkey,           }, "space", function () awful.layout.inc(layouts, 1) end),
+  awful.key({ modkey, "Shift"   }, "space", function () awful.layout.inc(layouts, -1) end),
   awful.key({ modkey, "Control" }, "n", awful.client.restore),
   --}}
 
   -- {{{ Custom Bindings
+  -- backlight control
+  awful.key({ }, "XF86MonBrightnessUp", function () awful.util.spawn("light -A 2") end),
+  awful.key({ }, "XF86MonBrightnessDown", function () awful.util.spawn("light -U 2") end),
+
   -- mpd control
-  awful.key({ "Shift" }, "space", function () mpc:toggle_play() mpc:update() end),
+  -- awful.key({ "Shift" }, "space", function () mpc:toggle_play() mpc:update() end),
   -- Smplayer/Gnome mplayer control
   awful.key({ modkey2 }, "space", function ()
     local result = os.execute("smplayer -send-action play_or_pause") -- return 0 on succes
@@ -802,10 +828,21 @@ local globalkeys = awful.util.table.join(
     os.execute('bash -c \'xrandr --output eDP1 --mode "1400x1050"; sleep 1; xrandr --output eDP1 --mode "1920x1080"\'')
   end),
 
+  awful.key({ }, "XF86LaunchA", function()
+    -- switch between external and internal display
+    -- source: https://wiki.archlinux.org/index.php/Xrandr#Scripts
+    -- os.execute('bash -c \'xrandr --output eDP1 --mode "2560x1600"; sleep 1; xrandr --output eDP1 --mode "1920x1080"\'')
+    os.execute('bash -c \'~/bin/togglescreen\'')
+  end),
+
   -- Volume keyboard control
-  awful.key({ }, "XF86AudioRaiseVolume", function () pulse_volume(5) end),
-  awful.key({ }, "XF86AudioLowerVolume", function () pulse_volume(-5)end),
-  awful.key({ }, "XF86AudioMute",        function () pulse_toggle()  end),
+--   awful.key({ }, "XF86AudioRaiseVolume", function () pulse_volume(5) end),
+--   awful.key({ }, "XF86AudioLowerVolume", function () pulse_volume(-5)end),
+--   awful.key({ }, "XF86AudioMute",        function () pulse_toggle()  end),
+  awful.key({ }, "XF86AudioRaiseVolume", function () awful.util.spawn("amixer -q set Master 2dB+") end),
+  awful.key({ }, "XF86AudioLowerVolume", function () awful.util.spawn("amixer -q set Master 2dB-") end),
+  awful.key({ }, "XF86AudioMute",        function () awful.util.spawn("amixer set Master 1+ toggle")  end),
+
 
   -- Calculator
   awful.key({ modkey }, "c", function () awful.util.spawn("gnome-calculator") end),
@@ -813,9 +850,34 @@ local globalkeys = awful.util.table.join(
   -- }}}
 
   -- Prompt
-  --awful.key({ modkey }, "r",     function () mypromptbox[mouse.screen]:run() end),
+  -- awful.key({ modkey }, "r",     function () mypromptbox[mouse.screen]:run() end),
   awful.key({ modkey }, "r", function () awful.util.spawn("valauncher") end),
+  awful.key({ modkey }, "g", function () mydmenu:show() end),
+  -- awful.key({ modkey }, "r",
+  -- function ()
+  --   awful.prompt.run({ prompt = "Run: ", hooks = {
+  --     {{         },"Return",function(command)
+  --       local result = awful.util.spawn(command)
+  --       mypromptbox[mouse.screen].widget:set_text(type(result) == "string" and result or "")
+  --       return true
+  --     end},
+  --     {{"Mod1"   },"Return",function(command)
+  --       local result = awful.util.spawn(command,{intrusive=true})
+  --       mypromptbox[mouse.screen].widget:set_text(type(result) == "string" and result or "")
+  --       return true
+  --     end},
+  --     {{"Shift"  },"Return",function(command)
+  --       local result = awful.util.spawn(command,{intrusive=true,ontop=true,floating=true})
+  --       mypromptbox[mouse.screen].widget:set_text(type(result) == "string" and result or "")
+  --       return true
+  --     end}
+  --   }},
+  --   mypromptbox[mouse.screen].widget,nil,
+  --   awful.completion.shell,
+  --   awful.util.getdir("cache") .. "/history")
+  -- end),
   --  awful.key({ modkey }, "s", function () menubar.show() end),
+  --  
   awful.key({ modkey }, "x",
     function ()
       awful.prompt.run({ prompt = "Run Lua code: " },
@@ -914,12 +976,50 @@ awful.rules.rules = {
                      buttons = clientbuttons } },
     { rule = { class = "MPlayer" },
       properties = { floating = true } },
+    { rule = { class = "scratchpad" },
+      properties = { floating = true } },
     { rule = { class = "pinentry" },
       properties = { floating = true } },
     { rule = { class = "gimp" },
       properties = { floating = true } },
     { rule       = { class = "Gajim.py" },
        callback   = awful.client.setslave },
+    -- { rule = { class = "Pidgin", role = "buddy_list" },
+    --   properties = {switchtotag = true, floating=true,
+    --                 maximized_vertical=true, maximized_horizontal=false },
+    --   callback = function (c)
+    --       local cl_width = 250    -- width of buddy list window
+    --       local def_left = true   -- default placement. note: you have to restart
+    --                               -- pidgin for changes to take effect
+
+    --       local scr_area = screen[c.screen].workarea
+    --       local cl_strut = c:struts()
+    --       local geometry = nil
+
+    --       -- adjust scr_area for this client's struts
+    --       if cl_strut ~= nil then
+    --           if cl_strut.left ~= nil and cl_strut.left > 0 then
+    --               geometry = {x=scr_area.x-cl_strut.left, y=scr_area.y,
+    --                           width=cl_strut.left}
+    --           elseif cl_strut.right ~= nil and cl_strut.right > 0 then
+    --               geometry = {x=scr_area.x+scr_area.width, y=scr_area.y,
+    --                           width=cl_strut.right}
+    --           end
+    --       end
+    --       -- scr_area is unaffected, so we can use the naive coordinates
+    --       if geometry == nil then
+    --           if def_left then
+    --               c:struts({left=cl_width, right=0})
+    --               geometry = {x=scr_area.x, y=scr_area.y,
+    --                           width=cl_width}
+    --           else
+    --               c:struts({right=cl_width, left=0})
+    --               geometry = {x=scr_area.x+scr_area.width-cl_width, y=scr_area.y,
+    --                           width=cl_width}
+    --           end
+    --       end
+    --       c:geometry(geometry)
+    --   end },
     -- Set Firefox to always map on tags number 2 of screen 1.
     -- { rule = { class = "Firefox" },
     --   properties = { tag = tags[1][2] } },
@@ -988,12 +1088,12 @@ client.connect_signal("manage", function (c)
 end)
 
 -- Enable sloppy focus
-client.connect_signal("mouse::enter", function(c)
-    if awful.layout.get(c.screen) ~= awful.layout.suit.magnifier
-        and awful.client.focus.filter(c) then
-        client.focus = c
-    end
-end)
+-- client.connect_signal("mouse::enter", function(c)
+--     if awful.layout.get(c.screen) ~= awful.layout.suit.magnifier
+--         and awful.client.focus.filter(c) then
+--         client.focus = c
+--     end
+-- end)
 
 client.connect_signal("focus", function(c) c.border_color = beautiful.border_focus end)
 client.connect_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
@@ -1011,9 +1111,39 @@ naughty.notify{
   os.getenv("USER"), awful.util.pread("hostname"):match("[^\n]*"), os.date()),
   timeout = 7 }
 -- }}}
+-- battery warning
+local function trim(s)
+  return s:find'^%s*$' and '' or s:match'^%s*(.*%S)'
+end
 
+local function bat_notification()
+  local f_capacity = assert(io.open("/sys/class/power_supply/BAT0/capacity", "r"))
+  local f_status = assert(io.open("/sys/class/power_supply/BAT0/status", "r"))
+  local bat_capacity = tonumber(f_capacity:read("*all"))
+  local bat_status = trim(f_status:read("*all"))
+
+  if (bat_capacity <= 10 and bat_status == "Discharging") then
+    naughty.notify({ title      = "Battery Warning"
+    , text       = "Battery low! " .. bat_capacity .."%" .. " left!"
+    , fg="#ffffff"
+    , bg="#C91C1C"
+    , timeout    = 15
+    , position   = "bottom_right"
+  })
+end
+end
+
+battimer = timer({timeout = 60})
+battimer:connect_signal("timeout", bat_notification)
+battimer:start()
+
+-- end here for battery warning
+
+-- dofile(configpath .. "50pidgin.lua")
 -- Java helper
 awful.util.spawn("wmname LG3D")
+awful.util.spawn(terminal .. "-e sleep 2; xrdb ~/.Xdefaults")
+-- awful.util.spawn("urxvt -name scratchpad")
 --vicious.suspend()
 --vicious.activate(batwidget)
 --vicious.activate(batbar)
