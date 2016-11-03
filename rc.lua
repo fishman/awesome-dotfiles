@@ -39,17 +39,16 @@ local iwlist      = require("utils.iwlist")
 -- MPD widget based on mpd.lua
 local wimpd       = require("utils.wimpd")
 local mpc         = wimpd.new()
-local drop        = require("scratchdrop")
+local scratch     = require("scratch")
 local dmenu       = require("dmenu")
 local lain        = require("lain")
--- local scratch = require("scratch")
--- local quake = require("quake")
-require("quake")
+markup2 = lain.util.markup
+-- load the 'run or raise' function
+local ror         = require("aweror")
 
 -- enable luajit
 pcall(function() jit.on() end)
 -- }}}
-
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -93,32 +92,12 @@ beautiful.tooltip_fg_color = beautiful.fg_normal
 local spawn_with_systemd = function(app)
   return "systemd-run --user --unit '"..app.."' '"..app.."'"
 end
-local terminal   = os.getenv("TERMINAL") or "urxvt"
+local terminal   = os.getenv("TERMINAL") or "urxvtc"
 local editor     = os.getenv("EDITOR") or "vim"
 local browser    = os.getenv("BROWSER") or "firefox"
 local mail       = "thunderbird"
 local editor_cmd = terminal.." -e "..editor
 local configpath = os.getenv("HOME") .. "/.config/awesome/"
-
-local quakeconsole = {}
-for s = 1, screen.count() do
-   quakeconsole[s] = quake({ terminal = terminal,
-           name = "scratchpad",
-           height = 0.3,
-           screen = s })
-end
-
-mydmenu = dmenu({
-  chromium = "chromium  --force-device-scale-factor=1.8",
-  mc = terminal .. " -e mc",
-  vim = terminal .. " -e vim",
-  urxvt = function()
-    local matcher = function (c)
-      return awful.rules.match(c, {class = 'scratchpad'})
-    end
-    awful.client.run_or_raise(exec, matcher)
-  end
-})
 
 -- Default modkey.
 -- Usually, Mod4 is the key with a logo between Control and Alt.
@@ -159,61 +138,46 @@ end
 -- the exclusive in each definition seems to be overhead, but it prevent new on-the-fly tags to be exclusive
 -- the follow function make it easier to swap tags
 
+local scount = screen.count()
+tags = {
+    names  = { "term", "coding", "web", "im", "vms", "media" },
+    layout = {
+        awful.layout.suit.tile.bottom, layouts[1], awful.layout.suit.max, awful.layout.suit.floating, awful.layout.suit.floating,
+        awful.layout.suit.floating, awful.layout.suit.floating, awful.layout.suit.floating, awful.layout.suit.floating
+    }
+}
+for s = 1, scount do
+    -- Each screen has its own tag table.
+    tags[s] = awful.tag(tags.names, s, tags.layout)
+end
+
 tyrannical.tags = {
   {
-    name = "1:web",
-    position = 1,
-    init = true,
     exclusive = true,
-    screen = 1,
+    init = false,
     layout = awful.layout.suit.tile,
-    exec_once = { "systemctl --user start "..browser },
-    class = { "Firefox", "Opera", "Chromium", "Aurora", "birdie",
-      "Thunderbird", "evolution", "dwb" },
+    class = { "Wine" }
   },
   {
-    name = "2:dev",
-    position = 2,
-    exclusive = true,
-    init = true,
-    screen = 1,
-    layout = awful.layout.suit.tile,
-    -- exec_once = { spawn_with_systemd(terminal) },
-    class       = {
-      "xterm" , "urxvt" , "aterm", "URxvt", "XTerm"
-    },
-    match       = {
-      "konsole"
-    }
-  },
-  {
-    name = "3:im",
-    position = 3,
-    exclusive = true,
-    mwfact = 0.2,
-    init = true,
-    layout = awful.layout.suit.tile.left_layout2,
-    class = { "Kopete", "Pidgin", "gajim" }
-  },
-  {
-    name = "4:doc",
-    position = 4,
-    exclusive = true,
+    name = "doc",
+    position = 5,
+    exclusive = false,
     init = false,
     layout = awful.layout.suit.max,
-    class = { "Evince", "GVim", "keepassx", "KeePass2", "libreoffice" }
+    -- exec_once = { spawn_with_systemd("keepass") },
+    class = { "Evince", "GVim", "keepassx", "KeePass2", "libreoffice", "calibre-gui", "Calibre" }
   },
   {
-    name = "5:java",
-    position = 5,
-    exclusive = true,
+    name = "6:java",
+    position = 6,
+    exclusive = false,
     init = false,
     layout = awful.layout.suit.tile,
-    class = { "Eclipse", "NetBeans IDE", "jetbrains%-idea%-ce", "sun-awt-X11-XFramePeer" }
+    class = { "Eclipse", "NetBeans IDE", "jetbrains%-idea%-ce", "sun-awt-X11-XFramePeer", "jetbrains-idea-ce" }
   },
   {
     name = "d:own",
-    position = 6,
+    position = 7,
     exclusive = true,
     init = false,
     layout = awful.layout.suit.tile,
@@ -221,34 +185,33 @@ tyrannical.tags = {
   },
   {
     name = "s:kype",
-    position = 7,
-    exclusive = true,
-    init = false,
-    layout = awful.layout.suit.tile,
-    exec_once = { spawn_with_systemd("pcmanfm") },
-    class = { "skype" }
-  },
-  {
-    name = "p:cfm",
-    position = 7,
-    exclusive = true,
-    init = false,
-    layout = awful.layout.suit.tile,
-    exec_once = { spawn_with_systemd("pcmanfm") },
-    class = { "pcmanfm", "dolphin", "nautilus", "thunar" }
-  },
-  {
-    name = "e:macs",
     position = 8,
     exclusive = true,
     init = false,
     layout = awful.layout.suit.tile,
-    exec_once = { spawn_with_systemd("emacs") },
+    class = { "skype" }
+  },
+  {
+    name = "s:pacefm",
+    position = 8,
+    exclusive = true,
+    init = false,
+    layout = awful.layout.suit.tile,
+    -- exec_once = { spawn_with_systemd("pcmanfm") },
+    class = { "pcmanfm", "dolphin", "nautilus", "thunar", "spacefm"}
+  },
+  {
+    name = "e:macs",
+    position = 9,
+    exclusive = true,
+    init = false,
+    layout = awful.layout.suit.tile,
+    -- exec_once = { spawn_with_systemd("emacs") },
     class = { "emacs" }
   },
   {
     name = "a:rio",
-    position = 9,
+    position = 10,
     exclusive = true,
     init = false,
     layout = awful.layout.suit.max,
@@ -257,43 +220,46 @@ tyrannical.tags = {
   },
   {
     name = "v:ideo",
-    position = 10,
-    exclusive = true,
-    init = false,
-    layout = awful.layout.suit.max                          ,
-    class = { "MPlayer", "VLC", "Smplayer" }
-  },
-  {
-    name = "w:ine",
     position = 11,
     exclusive = true,
     init = false,
-    layout = awful.layout.suit.tile,
-    class = { "Wine" }
+    layout = awful.layout.suit.max                          ,
+    class = { "MPlayer", "VLC", "Smplayer", "bomi" }
+  },
+  {
+    name = "s:lack",
+    position = 12,
+    exclusive = true,
+    init = false,
+    layout = awful.layout.suit.max,
+    class = { "slack" }
   },
 }
 
-tyrannical.properties.intrusive = {
-  "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "Wicd", "Valauncher", "scratchpad", "mpv"
-}
+-- tyrannical.properties.intrusive = {
+--   "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "Wicd",  "scratchpad", "bashrun", "mpv", "pinentry", "Nm-connection-editor", "Nm-applet", "nm-openvpn-auth-dialog", "Blueman-manager", "Gcr-prompter", "xev", "Hamster", "Lxpolkit", "URxvt", "maya-calendar"
+-- }
 
-tyrannical.properties.ontop = {
-  "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "Wicd", "Valauncher", "MPlayer", "mpv", "pinentry", "scratchpad" 
-}
+-- tyrannical.properties.ontop = {
+--   "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "Wicd",  "MPlayer", "mpv", "pinentry", "scratchpad", "bashrun", "Gcr-prompter", "Hamster", "Lxpolkit"
+-- }
 
-tyrannical.properties.floating = {
-  "MPlayer", "Mpv", "pinentry", "scratchpad"
-}
+-- tyrannical.properties.floating = {
+--   "MPlayer", "Mpv", "pinentry", "scratchpad", "bashrun", "idaq.exe", "idaq64.exe", "Tor Browser", "Gcr-prompter", "Gxmessage", "xev", "Hamster", "bashrun", "Lxpolkit", "Zathura", "maya-calendar", "Cantata"
+-- }
 
-full_screen_apps = {"Firefox", "dwb", "Opera", "Chromium", "Aurora", "Thunderbird", "evolution"}
+-- tyrannical.properties.centered = {
+--   "Gxmessage", "Hamster"
+-- }
+
+-- full_screen_apps = {"dwb", "Opera", "Chromium", "Aurora", "Thunderbird", "evolution", "luakit"}
 
 tyrannical.settings.group_children = true
 tyrannical.settings.block_children_focus_stealing = true --Block popups ()
-tyrannical.properties.maximized_horizontal = full_screen_apps
-tyrannical.properties.maximized_vertical = full_screen_apps
-
+-- tyrannical.properties.maximized_horizontal = full_screen_apps
+-- tyrannical.properties.maximized_vertical = full_screen_apps
 tyrannical.properties.size_hints_honor = {
-  xterm = false, URxvt = false, aterm = false, scratchpad = false
+  xterm = false, aterm = false, scratchpad = false, bashrun = false
 }
 
 --}}}
@@ -348,6 +314,25 @@ naughty.config.presets.critical.opacity = 0.8
 -- {{{ Vicious and MPD
 print("[awesome] initialize vicious")
 
+spr = wibox.widget.textbox(' ')
+arrl = wibox.widget.imagebox()
+arrl:set_image(beautiful.arrl)
+arrl_dl = wibox.widget.imagebox()
+arrl_dl:set_image(beautiful.arrl_dl)
+arrl_ld = wibox.widget.imagebox()
+arrl_ld:set_image(beautiful.arrl_ld)
+arrl_ld_grey = wibox.widget.imagebox()
+arrl_ld_grey:set_image(beautiful.arrl_ld_grey)
+arrl_ld_grey2 = wibox.widget.imagebox()
+arrl_ld_grey2:set_image(beautiful.arrl_ld_grey2)
+arrr = wibox.widget.imagebox()
+arrr:set_image(beautiful.arrr)
+arrr_dl = wibox.widget.imagebox()
+arrr_dl:set_image(beautiful.arrr_dl)
+arrr_ld = wibox.widget.imagebox()
+arrr_ld:set_image(beautiful.arrr_ld)
+spr5px = wibox.widget.imagebox()
+spr5px:set_image(beautiful.spr5px)
 -- {{{ Date and time
 -- Create a textclock widget
 local mytextclock = awful.widget.textclock()
@@ -369,68 +354,65 @@ end)
 
 -- {{{ Battery
 local batwidget = wibox.widget.textbox()
-local bat2widget = wibox.widget.textbox()
 local baticon   = wibox.widget.imagebox()
 baticon:set_image(beautiful.widget_battery)
-
-
 vicious.register(batwidget, vicious.widgets.bat, "$1$2% $3h", 7, "BAT0")
--- vicious.register(bat2widget, vicious.widgets.bat, "$1$2% $3h", 7, "ADP1")
+
+
+-- baticon = wibox.widget.imagebox(beautiful.widget_battery)
+-- local batwidget = lain.widgets.bat({
+--     settings = function()
+--         if bat_now.perc == "N/A" then
+--             widget:set_markup(" AC ")
+--             baticon:set_image(beautiful.widget_ac)
+--             return
+--         elseif tonumber(bat_now.perc) <= 5 then
+--             baticon:set_image(beautiful.widget_battery_empty)
+--         elseif tonumber(bat_now.perc) <= 15 then
+--             baticon:set_image(beautiful.widget_battery_low)
+--         else
+--             baticon:set_image(beautiful.widget_battery)
+--         end
+--         widget:set_markup(" " .. bat_now.perc .. "% ")
+--     end
+-- })
 -- }}}
 
 --{{{ Pulseaudio
-local pulseicon = wibox.widget.imagebox()
-pulseicon:set_image(beautiful.widget_vol)
--- Initialize widgets
-local pulsebar    = awful.widget.progressbar()
-local pulsewidget = wibox.widget.textbox()
-local pulsebox    = wibox.layout.margin(pulsebar, 2, 2, 4, 4)
+volicon = wibox.widget.imagebox(beautiful.widget_vol)
+volumewidget = lain.widgets.alsa({
+    settings = function()
+        if volume_now.status == "off" then
+            volicon:set_image(beautiful.widget_vol_mute)
+        elseif tonumber(volume_now.level) == 0 then
+            volicon:set_image(beautiful.widget_vol_no)
+        elseif tonumber(volume_now.level) <= 50 then
+            volicon:set_image(beautiful.widget_vol_low)
+        else
+            volicon:set_image(beautiful.widget_vol)
+        end
 
--- Progressbar properties
-pulsebar:set_width(8)
-pulsebar:set_height(10)
-pulsebar:set_ticks(true)
-pulsebar:set_ticks_size(2)
-pulsebar:set_vertical(true)
-pulsebar:set_background_color(beautiful.fg_off_widget)
-pulsebar:set_color(beautiful.fg_widget)
--- Bar from green to red
-pulsebar:set_color({ type = "linear", from = { 0, 0 }, to = { 0, 30 },
-     stops = { { 0, "#AECF96" }, { 1, "#FF5656" } } })
-
--- Enable caching
-vicious.cache(vicious.contrib.pulse)
-
-local function pulse_volume(delta)
-  vicious.contrib.pulse.add(delta, "alsa_output.pci-0000_00_1b.0.analog-stereo")
-  vicious.force({ pulsewidget, pulsebar})
-end
-
-local function pulse_toggle()
-  vicious.contrib.pulse.toggle("alsa_output.pci-0000_00_1b.0.analog-stereo")
-  vicious.force({ pulsewidget, pulsebar})
-end
-
--- vicious.register(pulsebar, vicious.contrib.pulse, "$1", 7)
-vicious.register(pulsebar, vicious.widgets.volume, "$1", 2, "Master")
-vicious.register(pulsewidget, vicious.widgets.volume, " $1% ", 2, "Master")
+        widget:set_text(" " .. volume_now.level .. "% ")
+    end
+})
 -- vicious.register(pulsewidget, vicious.contrib.pulse,
 -- function (widget, args)
 --   return string.format("%.f%%", args[1])
 -- end, 7, "alsa_output.pci-0000_00_1b.0.analog-stereo")
 
-pulsewidget:buttons(awful.util.table.join(
-  awful.button({ }, 1, function() awful.util.spawn("pavucontrol") end), --left click
-  awful.button({ }, 2, function() pulse_toggle() end),
-  awful.button({ }, 4, function() pulse_volume(5) end), -- scroll up
-  awful.button({ }, 5, function() pulse_volume(-5) end))) -- scroll down
+-- pulsewidget:buttons(awful.util.table.join(
+--   awful.button({ }, 1, function() awful.util.spawn("pavucontrol") end), --left click
+--   awful.button({ }, 2, function() pulse_toggle() end),
+--   awful.button({ }, 4, function() pulse_volume(5) end), -- scroll up
+--   awful.button({ }, 5, function() pulse_volume(-5) end))) -- scroll down
 
-pulsebar:buttons(pulsewidget:buttons())
-pulseicon:buttons(pulsewidget:buttons())
+-- pulsebar:buttons(pulsewidget:buttons())
+-- pulseicon:buttons(pulsewidget:buttons())
 --}}}
 
 -- {{{ CPU usage
 local cpuwidget = wibox.widget.textbox()
+local cpubg     = wibox.widget.background(cpuwidget, "#313131")
 local cpuicon = wibox.widget.imagebox()
 cpuicon:set_image(beautiful.widget_cpu)
 -- Initialize widgets
@@ -452,7 +434,7 @@ for i=1,#args do
   else text = args[i].."%" end
 end
 return text
-end, 7)
+end, 10)
 -- Register buttons
 cpuwidget:buttons( awful.button({ }, 1, function () awful.util.spawn(terminal .. " -e htop") end) )
 cpuicon:buttons( cpuwidget:buttons() )
@@ -463,7 +445,7 @@ cpuicon:buttons( cpuwidget:buttons() )
 local thermalwidget = wibox.widget.textbox()
 local thermalicon = wibox.widget.imagebox()
 thermalicon:set_image(beautiful.widget_temp)
-vicious.register(thermalwidget, vicious.widgets.thermal, "$1°C", 7, {"thermal_zone0", "sys"})
+vicious.register(thermalwidget, vicious.widgets.thermal, "$1°C", 10, {"thermal_zone0", "sys"})
 -- }}}
 
 -- {{{ Memory usage
@@ -471,7 +453,7 @@ vicious.register(thermalwidget, vicious.widgets.thermal, "$1°C", 7, {"thermal_z
 local memwidget = wibox.widget.textbox()
 local memicon = wibox.widget.imagebox()
 memicon:set_image(beautiful.widget_mem)
-vicious.register(memwidget, vicious.widgets.mem, "$2MB/$3MB ", 7)
+vicious.register(memwidget, vicious.widgets.mem, "$2MB/$3MB ", 10)
 -- Register buttons
 memwidget:buttons( cpuwidget:buttons() )
 memicon:buttons( cpuwidget:buttons() )
@@ -479,10 +461,11 @@ memicon:buttons( cpuwidget:buttons() )
 
 -- {{{ Net usage
 local netwidget = wibox.widget.textbox()
+local netbg     = wibox.widget.background(netwidget, "#313131")
 local neticon  = wibox.widget.imagebox()
 neticon:set_image(beautiful.widget_net)
 -- Register widget
-vicious.register(netwidget, vicious.widgets.net, '<span color="#CC9393">${wlp3s0 down_kb}</span> <span color="#7F9F7F">${wlp3s0 up_kb}</span>', 7)
+vicious.register(netwidget, vicious.widgets.net, '<span color="#CC9393">${wlp3s0 down_kb}</span> <span color="#7F9F7F">${wlp3s0 up_kb}</span>', 10)
 netwidget:buttons( awful.button({ }, 1, function () awful.util.spawn(terminal .. " -e sudo nethogs -d 2 -p wlp3s0") end) )
 neticon:buttons( netwidget:buttons() )
 -- }}}
@@ -492,52 +475,71 @@ local ioicon = wibox.widget.imagebox()
 ioicon:set_image(beautiful.widget_hdd)
 ioicon.visible = true
 local iowidget = wibox.widget.textbox()
+local iobg     = wibox.widget.background(iowidget, "#313131")
 vicious.register(iowidget, vicious.widgets.dio, "SSD ${sda read_mb}/${sda write_mb}MB", 7)
 -- Register buttons
 iowidget:buttons( awful.button({ }, 1, function () awful.util.spawn(terminal .. " -e sudo iotop") end) )
 -- }}}
 
 --{{{ Pacman
-local pkgwidget = wibox.widget.textbox()
-local pkgicon = wibox.widget.imagebox()
-pkgicon:set_image(icon_path.."pacman.png")
--- Don't show icon by default
-pkgicon.visible = false
+-- local pkgwidget = wibox.widget.textbox()
+-- local pkgicon = wibox.widget.imagebox()
+-- pkgicon:set_image(icon_path.."pacman.png")
+-- -- Don't show icon by default
+-- pkgicon.visible = false
 
--- Use a cronjob to update the packagelist http://bbs.archlinux.org/viewtopic.php?id=84115
-vicious.register(pkgwidget, vicious.widgets.pkg,
-function(widget, args)
- -- Check wheter pacman db is locked. Don't use aweful.util.file_readable,
- -- because the db.lck isn't readable at all.
- local db_locked = os.execute("[[ -f /var/lib/pacman/db.lck ]] && exit 1 || exit 0")
- -- Don't disturb me, unless enough updates are collect and pacman doesn't run
- if args[1] < 8 or db_locked ~= 0 then
-    -- If you use powerpill, it is important to check wheter it runs!
-    pkgicon.visible = false
-    return ""
- else
-    pkgicon.visible = true
-    return markup.urgent("<b>Updates</b> "..args[1]).." "
- end
-end, 180, "Arch")
+-- -- Use a cronjob to update the packagelist http://bbs.archlinux.org/viewtopic.php?id=84115
+-- vicious.register(pkgwidget, vicious.widgets.pkg,
+-- function(widget, args)
+--  -- Check wheter pacman db is locked. Don't use aweful.util.file_readable,
+--  -- because the db.lck isn't readable at all.
+--  local db_locked = os.execute("[[ -f /var/lib/pacman/db.lck ]] && exit 1 || exit 0")
+--  -- Don't disturb me, unless enough updates are collect and pacman doesn't run
+--  if args[1] < 8 or db_locked ~= 0 then
+--     -- If you use powerpill, it is important to check wheter it runs!
+--     pkgicon.visible = false
+--     return ""
+--  else
+--     pkgicon.visible = true
+--     return markup.urgent("<b>Updates</b> "..args[1]).." "
+--  end
+-- end, 1, "Arch")
 
-pkgwidget:buttons( awful.button({ }, 1,
-function ()
- pkgwidget.visible, pkgicon.visible = false, false
- -- URxvt specific
- awful.util.spawn(terminal.." -title 'Yaourt Upgrade' -e zsh -c 'yaourt -Syu --aur'")
-end))
-pkgicon:buttons( pkgwidget:buttons() )
+-- pkgwidget:buttons( awful.button({ }, 1,
+-- function ()
+--  pkgwidget.visible, pkgicon.visible = false, false
+--  -- URxvt specific
+--  awful.util.spawn(terminal.." -title 'Packer Upgrade' -e zsh -c 'packer -Syu'")
+-- end))
+-- pkgicon:buttons( pkgwidget:buttons() )
 --}}}
 
 -- {{{ MPD
 local wimpc = wibox.widget.textbox()
-local mpcicon = wibox.widget.imagebox()
-mpcicon:set_image(beautiful.widget_music)
+local mpdicon = wibox.widget.imagebox(beautiful.widget_music)
 mpc.attach(wimpc)
+-- mpdicon = wibox.widget.imagebox(beautiful.widget_music)
+-- mpdwidget = lain.widgets.mpd({
+--     settings = function()
+--         if mpd_now.state == "play" then
+--             artist = " " .. mpd_now.artist .. " "
+--             title  = mpd_now.title  .. " "
+--             mpdicon:set_image(beautiful.widget_music_on)
+--         elseif mpd_now.state == "pause" then
+--             artist = " mpd "
+--             title  = "paused "
+--         else
+--             artist = ""
+--             title  = ""
+--             mpdicon:set_image(beautiful.widget_music)
+--         end
+
+--         widget:set_markup(markup2("#EA6F81", artist) .. title)
+--     end
+-- })
 
 -- Register Buttons in both widget
-mpcicon:buttons( wimpc:buttons(awful.util.table.join(
+mpdicon:buttons( wimpc:buttons(awful.util.table.join(
 awful.button({ }, 1, function () mpc:toggle_play() mpc:update()      end), -- left click
 awful.button({ }, 2, function () awful.util.spawn("sonata")          end), -- middle click
 awful.button({ }, 3, function () awful.util.spawn("urxvt -e ncmpcpp")end), -- right click
@@ -548,6 +550,7 @@ awful.button({ }, 5, function () mpc:seek(-5) mpc:update()           end)  -- sc
 
 --{{{ Wifi
 local wifiwidget = wibox.widget.textbox()
+local wifibg     = wibox.widget.background(wifiwidget, "#313131")
 local wifiicon   = wibox.widget.imagebox()
 local wifitooltip= awful.tooltip({})
 wifitooltip:add_to_object(wifiwidget)
@@ -561,7 +564,7 @@ vicious.register(wifiwidget, vicious.widgets.wifi,
       quality = args["{link}"] / args["{linp}"] * 100
     end
     wifitooltip:set_text(tooltip)
-    return ("%s: %.1f%%"):format(args["{ssid}"], quality)
+    return args["{ssid}"]
   end, 5, "wlp3s0")
 wifiicon:buttons( wifiwidget:buttons(awful.util.table.join(
 awful.button({}, 1, function()
@@ -666,21 +669,31 @@ for s = 1, screen.count() do
   local left_layout = wibox.layout.fixed.horizontal()
   left_layout:add(mylauncher)
   left_layout:add(mytaglist[s])
+  left_layout:add(arrr)
+  left_layout:add(spr)
   left_layout:add(mypromptbox[s])
-  left_layout:add(mydmenu.textbox)
+  -- left_layout:add(mydmenu.textbox)
 
   local right_layout = wibox.layout.fixed.horizontal()
-  if s == 1 then right_layout:add(wibox.widget.systray()) end
+  if s == 1 then 
+    right_layout:add(arrl_ld_grey)
+  end
+  right_layout:add(wibox.widget.systray())
+  right_layout:add(arrl_ld_grey2)
   right_layout:add(wifiicon)
-  right_layout:add(wifiwidget)
+  right_layout:add(wifibg)
+  right_layout:add(arrl_dl)
   right_layout:add(baticon)
   right_layout:add(batwidget)
+  right_layout:add(spr)
   -- right_layout:add(bat2widget)
-  right_layout:add(pulseicon)
-  right_layout:add(pulsebox)
-  right_layout:add(pulsewidget)
+  right_layout:add(arrl)
+  right_layout:add(volicon)
+  right_layout:add(volumewidget)
   right_layout:add(clockicon)
+  right_layout:add(arrl)
   right_layout:add(mytextclock)
+  right_layout:add(arrl_ld)
   right_layout:add(mylayoutbox[s])
 
   local layout = wibox.layout.align.horizontal()
@@ -694,21 +707,31 @@ for s = 1, screen.count() do
   local left_layout2 = wibox.layout.fixed.horizontal()
 
   left_layout2:add(cpuicon)
-  left_layout2:add(cpuwidget)
-  left_layout2:add(thermalicon)
-  left_layout2:add(thermalwidget)
+  left_layout2:add(cpubg)
+  left_layout2:add(arrr_ld)
   left_layout2:add(memicon)
   left_layout2:add(memwidget)
+  left_layout2:add(arrr_dl)
   left_layout2:add(ioicon)
-  left_layout2:add(iowidget)
+  left_layout2:add(iobg)
+  left_layout2:add(arrr_ld)
+  left_layout2:add(thermalicon)
+  left_layout2:add(thermalwidget)
+  left_layout2:add(arrr_dl)
   left_layout2:add(neticon)
-  left_layout2:add(netwidget)
+  left_layout2:add(netbg)
+  left_layout2:add(arrr_ld)
 
   local right_layout2 = wibox.layout.fixed.horizontal()
-  right_layout2:add(mpcicon)
+  -- right_layout2:add(mpcicon)
+  -- right_layout2:add(wimpc)
+  right_layout2:add(arrl_ld)
+  right_layout2:add(mpdicon)
+  right_layout2:add(arrl_dl)
   right_layout2:add(wimpc)
-  right_layout2:add(pkgicon)
-  right_layout2:add(pkgwidget)
+  -- right_layout2:add(arrl)
+  -- right_layout2:add(pkgicon)
+  -- right_layout2:add(pkgwidget)
 
   local layout2 = wibox.layout.align.horizontal()
   layout2:set_left(left_layout2)
@@ -761,7 +784,8 @@ local globalkeys = awful.util.table.join(
   awful.key({ modkey, "Control" }, "j", function () awful.screen.focus_relative( 1) end),
   awful.key({ modkey, "Control" }, "k", function () awful.screen.focus_relative(-1) end),
   awful.key({ modkey,           }, "u", awful.client.urgent.jumpto),
-  awful.key({ modkey,           }, "`", function () quakeconsole[mouse.screen]:toggle() end),
+  -- awful.key({ modkey,           }, "`", function () quakeconsole[mouse.screen]:toggle() end),
+  awful.key({ modkey,           }, "`", function() scratch("urxvt -name scratchpad -e tmux-scratchpad", "top", "center", 0.90, 0.30) end),
   -- awful.key({ modkey,           }, "`", function () drop(terminal .. " -name scratchpad") end),
   awful.key({ modkey,           }, "Tab",
      function ()
@@ -778,11 +802,12 @@ local globalkeys = awful.util.table.join(
   awful.key({ modkey, modkey2 }, "l", function () awful.client.moveresize(20, 0, 0, 0)  end),
 
   -- Standard program
-  awful.key({ modkey,           }, "Return", function () awful.util.spawn(terminal) end),
+  awful.key({ modkey, "Shift"   }, "Return", function () awful.util.spawn(terminal) end),
   awful.key({ modkey, "Control" }, "r", awesome.restart),
-  awful.key({ modkey, "Shift"   }, "q", awesome.quit),
+  awful.key({ modkey, "Shift"   }, "q", function () awful.util.spawn("lxsession-logout") end),
+  -- awful.key({ modkey, "Shift"   }, "q", awesome.quit),
   -- lockscreen
-  awful.key({ modkey, "Shift"   }, "l", function () awful.util.spawn("slimlock") end),
+  awful.key({ modkey, "Shift"   }, "l", function () awful.util.spawn_with_shell("xautolock -locknow") end),
 
   awful.key({ modkey,           }, "l",     function () awful.tag.incmwfact( 0.05)    end),
   awful.key({ modkey,           }, "h",     function () awful.tag.incmwfact(-0.05)    end),
@@ -797,8 +822,10 @@ local globalkeys = awful.util.table.join(
 
   -- {{{ Custom Bindings
   -- backlight control
-  awful.key({ }, "XF86MonBrightnessUp", function () awful.util.spawn("light -A 2") end),
-  awful.key({ }, "XF86MonBrightnessDown", function () awful.util.spawn("light -U 2") end),
+  -- awful.key({ }, "XF86MonBrightnessUp", function () awful.util.spawn("light -A 2") end),
+  -- awful.key({ }, "XF86MonBrightnessDown", function () awful.util.spawn("light -U 2") end),
+  awful.key({ }, "XF86MonBrightnessUp", function () awful.util.spawn("xbacklight -inc 5") end),
+  awful.key({ }, "XF86MonBrightnessDown", function () awful.util.spawn("xbacklight -dec 5") end),
 
   -- mpd control
   -- awful.key({ "Shift" }, "space", function () mpc:toggle_play() mpc:update() end),
@@ -851,8 +878,13 @@ local globalkeys = awful.util.table.join(
 
   -- Prompt
   -- awful.key({ modkey }, "r",     function () mypromptbox[mouse.screen]:run() end),
-  awful.key({ modkey }, "r", function () awful.util.spawn("valauncher") end),
-  awful.key({ modkey }, "g", function () mydmenu:show() end),
+  -- awful.key({ modkey }, "r", function () awful.util.spawn("dmenu_run -fn '-xos4-terminus-medium-r-*-*-28-' -hist " .. os.getenv("HOME") .. "/.dmenu.history  -nb '".. beautiful.bg_normal .."' -nf '".. beautiful.fg_normal .."' -sb '#955'") end),
+  -- awful.key({ modkey }, "r", function () awful.util.spawn("mutate") end),
+  -- Menubar
+  -- awful.key({ modkey }, "r", function() menubar.show() end),
+  awful.key({ modkey }, "r", function() awful.util.spawn('supermenu') end),
+  -- awful.key({ modkey }, "r", function() awful.util.spawn('urxvt -name bashrun -e sh -c "/bin/zsh -i -t" ') end),
+  -- awful.key({ modkey }, "g", function () mydmenu:show() end),
   -- awful.key({ modkey }, "r",
   -- function ()
   --   awful.prompt.run({ prompt = "Run: ", hooks = {
@@ -885,8 +917,6 @@ local globalkeys = awful.util.table.join(
       awful.util.eval, nil,
       awful.util.getdir("cache") .. "/history_eval")
     end)
-  -- Menubar
-  --awful.key({ modkey }, "p", function() menubar.show() end)
   )
 
 local clientkeys = awful.util.table.join(
@@ -961,6 +991,9 @@ clientbuttons = awful.util.table.join(
     awful.button({ modkey }, 1, awful.mouse.client.move),
     awful.button({ modkey }, 3, awful.mouse.client.resize))
 
+-- generate and add the 'run or raise' key bindings to the globalkeys table
+globalkeys = awful.util.table.join(globalkeys, ror.genkeys(modkey))
+
 -- Set keys
 root.keys(globalkeys)
 -- }}}
@@ -971,58 +1004,119 @@ awful.rules.rules = {
     { rule = { },
       properties = { border_width = beautiful.border_width,
                      border_color = beautiful.border_normal,
-                     focus = awful.client.focus.filter,
+                     focus = true,
                      keys = clientkeys,
                      buttons = clientbuttons } },
-    { rule = { class = "MPlayer" },
+    { rule_any = { class = { "Pcmanfm", "Nautilus", "Thunar" } },
+      properties = { floating = true },
+      callback = awful.placement.centered },
+    { rule_any = { class = { "Xmessage",  "Gxmessage", "Hamster-time-tracker" } },
+      properties = { floating = true },
+      callback = awful.placement.centered },
+    { rule_any = { class = { "Zathura", "Epdfview", "Remmina", "Bottlechooser.rb", "Evince", "GV"} },
       properties = { floating = true } },
+    -- media
+    { rule_any = { class = { "Smplayer", "MPlayer", "Deadbeef", "gtkpod", "gpodder" } },
+      properties = { floating = true },
+      callback = function(c)
+              awful.client.movetotag(tags[mouse.screen][7], c)
+              awful.tag.viewonly(tags[mouse.screen][7])
+      end},
+    { rule_any = { class = { "Dxtime", "Zim", "pinentry", "gimp", "Synapse", "TogglDesktop", "GenieSQL" } },
+      properties = { floating = true } },
+    { rule_any = { class = { "Gvim", "Anjuta", "Emacs" } },
+      properties = { tag = tags[1][2], switchtotag = true } },
+    { rule_any = { class = { "Firefox", "Iron", "Opera", "luakit", "Uzbl-core" } },
+      callback = function(c)
+              awful.client.movetotag(tags[mouse.screen][3], c)
+              awful.tag.viewonly(tags[mouse.screen][3])
+      end},
+    -- this is flash
+    { rule_any = { name = { "plugin-container" }, class = { "Exe" } },
+      properties = { floating = true },
+      callback = function(c)
+            c.fullscreen = true
+      end},
+    { rule = { class = "Firefox" },
+      except = { instance = "Navigator" },
+      properties = { floating = true } },
+    -- { rule = { class = "Firefox", instance = "Navigator" },
+    --   properties = { maximize_vertical = true, maximized_horizontal = true } },
+    -- { rule = { class = "Iron" },
+    --   properties = { maximize_vertical = true, maximized_horizontal = true } },
+      -- thunderbird
+    -- { rule = { class = "URxvt" },
+    --   properties = { tag = tags[1][1], switchtotag = true } },
+    { rule = { class = "Thunderbird" },
+      properties = { tag = tags[1][3] } },
+    { rule_any = { class = { "Skype", "Pidgin" } },
+      properties = { switchtotag = true, tag = tags[1][4] },
+      callback = function(c) awful.client.movetotag(tags[mouse.screen][5], c) end},
+    { rule = { class = "Pidgin", role = "buddy_list" },
+      properties = {switchtotag = true, floating=true,
+                    maximized_vertical=true, maximized_horizontal=false },
+      callback = function (c)
+          local cl_width = 400    -- width of buddy list window
+          local def_left = true   -- default placement. note: you have to restart
+                                  -- pidgin for changes to take effect
+
+          local scr_area = screen[c.screen].workarea
+          local cl_strut = c:struts()
+          local geometry = nil
+
+          -- adjust scr_area for this client's struts
+          if cl_strut ~= nil then
+              if cl_strut.left ~= nil and cl_strut.left > 0 then
+                  geometry = {x=scr_area.x-cl_strut.left, y=scr_area.y,
+                              width=cl_strut.left}
+              elseif cl_strut.right ~= nil and cl_strut.right > 0 then
+                  geometry = {x=scr_area.x+scr_area.width, y=scr_area.y,
+                              width=cl_strut.right}
+              end
+          end
+          -- scr_area is unaffected, so we can use the naive coordinates
+          if geometry == nil then
+              if def_left then
+                  c:struts({left=cl_width, right=0})
+                  geometry = {x=scr_area.x, y=scr_area.y,
+                              width=cl_width}
+              else
+                  c:struts({right=cl_width, left=0})
+                  geometry = {x=scr_area.x+scr_area.width-cl_width, y=scr_area.y,
+                              width=cl_width}
+              end
+          end
+          c:geometry(geometry)
+      end },
+    { rule = { class = "Skype"},
+      except = { name = "Chat" },
+      properties = { floating = true } },
+    { rule_any = { class = { "Vmware", "VirtualBox", "Qemu-system-x86_64" } },
+      properties = { tag = tags[1][5] } },
+      -- office
+    { rule_any = { class = { "libreoffice-startcenter",  "libreoffice-impress" }, name = { "PowerPoint % [~]" }  },
+      properties = { tag = tags[1][7] } },
+      -- dia
+    { rule = { class = "Dia", role = "diagram_window" },
+      properties = { tag = tags[1][8], fullscreen = true } },
+    { rule = { class = "Dia", role = "toolbox_window" },
+      properties = { tag = tags[1][8], fullscreen = true },
+      callback = function(c) c.ontop = true end},
     { rule = { class = "scratchpad" },
       properties = { floating = true } },
     { rule = { class = "pinentry" },
       properties = { floating = true } },
-    { rule = { class = "gimp" },
+    { rule = { class = "Wicd-client.py" },
       properties = { floating = true } },
-    { rule       = { class = "Gajim.py" },
-       callback   = awful.client.setslave },
-    -- { rule = { class = "Pidgin", role = "buddy_list" },
-    --   properties = {switchtotag = true, floating=true,
-    --                 maximized_vertical=true, maximized_horizontal=false },
-    --   callback = function (c)
-    --       local cl_width = 250    -- width of buddy list window
-    --       local def_left = true   -- default placement. note: you have to restart
-    --                               -- pidgin for changes to take effect
-
-    --       local scr_area = screen[c.screen].workarea
-    --       local cl_strut = c:struts()
-    --       local geometry = nil
-
-    --       -- adjust scr_area for this client's struts
-    --       if cl_strut ~= nil then
-    --           if cl_strut.left ~= nil and cl_strut.left > 0 then
-    --               geometry = {x=scr_area.x-cl_strut.left, y=scr_area.y,
-    --                           width=cl_strut.left}
-    --           elseif cl_strut.right ~= nil and cl_strut.right > 0 then
-    --               geometry = {x=scr_area.x+scr_area.width, y=scr_area.y,
-    --                           width=cl_strut.right}
-    --           end
-    --       end
-    --       -- scr_area is unaffected, so we can use the naive coordinates
-    --       if geometry == nil then
-    --           if def_left then
-    --               c:struts({left=cl_width, right=0})
-    --               geometry = {x=scr_area.x, y=scr_area.y,
-    --                           width=cl_width}
-    --           else
-    --               c:struts({right=cl_width, left=0})
-    --               geometry = {x=scr_area.x+scr_area.width-cl_width, y=scr_area.y,
-    --                           width=cl_width}
-    --           end
-    --       end
-    --       c:geometry(geometry)
-    --   end },
-    -- Set Firefox to always map on tags number 2 of screen 1.
-    -- { rule = { class = "Firefox" },
-    --   properties = { tag = tags[1][2] } },
+    { rule = { class = "Firefox" },
+      except = { instance = "Navigator" },
+      properties = { floating = true } },
+    { rule = { class = "Tor Browser" },
+      except = { instance = "Navigator" },
+      properties = { floating = true } },
+    { rule = { class = "Chromium" },
+      except = { role = "browser" },
+      properties = { floating = true } },
 }
 -- }}}
 
@@ -1109,7 +1203,7 @@ naughty.notify{
   title = "Awesome "..awesome.version.." started!",
   text  = string.format("Welcome %s. Your host is %s.\nIt is %s",
   os.getenv("USER"), awful.util.pread("hostname"):match("[^\n]*"), os.date()),
-  timeout = 7 }
+  timeout = 5 }
 -- }}}
 -- battery warning
 local function trim(s)
@@ -1124,13 +1218,16 @@ local function bat_notification()
 
   if (bat_capacity <= 10 and bat_status == "Discharging") then
     naughty.notify({ title      = "Battery Warning"
-    , text       = "Battery low! " .. bat_capacity .."%" .. " left!"
-    , fg="#ffffff"
-    , bg="#C91C1C"
-    , timeout    = 15
-    , position   = "bottom_right"
-  })
-end
+      , text       = "Battery low! " .. bat_capacity .."%" .. " left!"
+      , fg="#ffffff"
+      , bg="#C91C1C"
+      , timeout    = 15
+      , position   = "bottom_right"
+    })
+  end
+  if (bat_capacity <= 4 and bat_status == "Discharging") then
+    awful.util.spawn('systemctl hybrid-sleep')
+  end
 end
 
 battimer = timer({timeout = 60})
@@ -1142,11 +1239,36 @@ battimer:start()
 -- dofile(configpath .. "50pidgin.lua")
 -- Java helper
 awful.util.spawn("wmname LG3D")
-awful.util.spawn(terminal .. "-e sleep 2; xrdb ~/.Xdefaults")
 -- awful.util.spawn("urxvt -name scratchpad")
 --vicious.suspend()
 --vicious.activate(batwidget)
 --vicious.activate(batbar)
 --vicious.activate(wifiwidget)
 
+
+-- {{{ obsolete
+-- local scratch = require("scratch")
+-- local quake = require("quake")
+-- require("quake")
+-- local quakeconsole = {}
+-- for s = 1, screen.count() do
+--    quakeconsole[s] = quake({ terminal = terminal,
+--            name = "scratchpad",
+--            height = 0.3,
+--            screen = s })
+-- end
+
+-- mydmenu = dmenu({
+--   chromium = "chromium  --force-device-scale-factor=1.8",
+--   mc = terminal .. " -e mc",
+--   vim = terminal .. " -e vim",
+--   ida = "dex ~/.local/share/applications/idaq.desktop",
+--   urxvt = function()
+--     local matcher = function (c)
+--       return awful.rules.match(c, {class = 'scratchpad'})
+--     end
+--     awful.client.run_or_raise(exec, matcher)
+--   end
+-- })
+-- }}}
 -- vim: foldmethod=marker:filetype=lua:expandtab:shiftwidth=2:tabstop=2:softtabstop=2:textwidth=80
