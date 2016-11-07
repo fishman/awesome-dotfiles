@@ -13,6 +13,7 @@ print("[awesome] Entered awesome.lua: "..os.date())
 -- Standard awesome library
 local gears       = require("gears")
 local awful       = require("awful")
+local tyrannical  = require("tyrannical")
 awful.rules       = require("awful.rules")
 require("awful.autofocus")
 -- Widget and layout library
@@ -25,7 +26,6 @@ dbus              = nil
 local naughty     = require("naughty")
 dbus              = _dbus
 local menubar     = require("menubar")
-local tyrannical  = require("tyrannical")
 -- widget library
 local vicious     = require("vicious")
 vicious.contrib   = require("vicious.contrib")
@@ -92,12 +92,17 @@ beautiful.tooltip_fg_color = beautiful.fg_normal
 local spawn_with_systemd = function(app)
   return "systemd-run --user --unit '"..app.."' '"..app.."'"
 end
-local terminal   = os.getenv("TERMINAL") or "urxvtc"
+terminal   = os.getenv("TERMINAL") or "urxvtc"
 local editor     = os.getenv("EDITOR") or "vim"
 local browser    = os.getenv("BROWSER") or "firefox"
 local mail       = "thunderbird"
 local editor_cmd = terminal.." -e "..editor
 local configpath = os.getenv("HOME") .. "/.config/awesome/"
+local passmenu = "rofimenu" 
+local ranger = terminal .. " -e ranger"
+local dmenurun = "rofi -show run -font \"snap 10\" -fg \"#D3D3D3\" -bg \"#000000\" -hlfg \"#ffb964\" -hlbg \"#000000\" -o 85"
+local dwinshow = "rofi -show window -font \"snap 10\" -fg \"#D3D3D3\" -bg \"#000000\" -hlfg \"#ffb964\" -hlbg \"#000000\" -o 85"
+
 
 -- Default modkey.
 -- Usually, Mod4 is the key with a logo between Control and Alt.
@@ -109,7 +114,7 @@ local modkey2   = "Mod1"
 local icon_path = awful.util.getdir("config").."/icons/"
 
 -- Table of layouts to cover with awful.layout.inc, order matters.
-layouts = {
+local layouts = {
   awful.layout.suit.tile,               -- 1
   awful.layout.suit.tile.left,          -- 2
   awful.layout.suit.tile.bottom,        -- 3
@@ -138,20 +143,59 @@ end
 -- the exclusive in each definition seems to be overhead, but it prevent new on-the-fly tags to be exclusive
 -- the follow function make it easier to swap tags
 
-local scount = screen.count()
-tags = {
-    names  = { "term", "coding", "web", "im", "vms", "media" },
-    layout = {
-        awful.layout.suit.tile.bottom, layouts[1], awful.layout.suit.max, awful.layout.suit.floating, awful.layout.suit.floating,
-        awful.layout.suit.floating, awful.layout.suit.floating, awful.layout.suit.floating, awful.layout.suit.floating
-    }
-}
-for s = 1, scount do
-    -- Each screen has its own tag table.
-    tags[s] = awful.tag(tags.names, s, tags.layout)
-end
+-- local scount = screen.count()
+-- tags = {
+--     names  = { "term", "coding", "web", "im", "vms", "media" },
+--     layout = {
+--         awful.layout.suit.tile.bottom, layouts[1], awful.layout.suit.max, awful.layout.suit.floating, awful.layout.suit.floating,
+--         awful.layout.suit.floating, awful.layout.suit.floating, awful.layout.suit.floating, awful.layout.suit.floating
+--     }
+-- }
+-- for s = 1, scount do
+--     -- Each screen has its own tag table.
+--     tags[s] = awful.tag(tags.names, s, tags.layout)
+-- end
+
+-- First, set some settings
+tyrannical.settings.default_layout = awful.layout.suit.tile.left
+tyrannical.settings.mwfact = 0.66
 
 tyrannical.tags = {
+  {
+    name = "1:web",
+    position = 1,
+    init = true,
+    exclusive = true,
+    screen = 1,
+    layout = awful.layout.suit.max,
+    exec_once = { browser },
+    class = { "Firefox", "Opera", "Chromium", "Aurora", "birdie",
+    "Thunderbird", "evolution", "Corebird", "Caprine", "vimb" },
+  },
+  {
+    name = "2:dev",
+    position = 2,
+    exclusive = true,
+    init = true,
+    screen = 1,
+    layout = awful.layout.suit.tile,
+    class       = {
+      "xterm" , "urxvt" , "aterm", "URxvt", "XTerm"
+    },
+    match       = {
+      "konsole"
+    }
+  },
+  {
+    name = "3:im",
+    position = 3,
+    exclusive = true,
+    mwfact = 0.25,
+    init = true,
+    layout = awful.layout.suit.tile,
+    exec_once = { "pidgin" },
+    class = { "Kopete", "Pidgin", "gajim" }
+  },
   {
     exclusive = true,
     init = false,
@@ -181,7 +225,7 @@ tyrannical.tags = {
     exclusive = true,
     init = false,
     layout = awful.layout.suit.tile,
-    class = { "gpodder", "JDownloader", "Transmission" }
+    class = { "gpodder", "JDownloader", "transmission-gtk" }
   },
   {
     name = "s:kype",
@@ -198,7 +242,7 @@ tyrannical.tags = {
     init = false,
     layout = awful.layout.suit.tile,
     -- exec_once = { spawn_with_systemd("pcmanfm") },
-    class = { "pcmanfm", "dolphin", "nautilus", "thunar", "spacefm"}
+    class = { "pcmanfm", "dolphin", "nautilus", "thunar", "spacefm", "doublecmd"}
   },
   {
     name = "e:macs",
@@ -206,16 +250,16 @@ tyrannical.tags = {
     exclusive = true,
     init = false,
     layout = awful.layout.suit.tile,
-    -- exec_once = { spawn_with_systemd("emacs") },
+    exec_once = { "emacs" },
     class = { "emacs" }
   },
   {
-    name = "a:rio",
+    name = "a:udio",
     position = 10,
     exclusive = true,
     init = false,
     layout = awful.layout.suit.max,
-    class = { "sonata", "Goggles Music"},
+    class = { "sonata", "ncmpcpp"},
     match = { "ncmpcpp" }
   },
   {
@@ -223,8 +267,8 @@ tyrannical.tags = {
     position = 11,
     exclusive = true,
     init = false,
-    layout = awful.layout.suit.max                          ,
-    class = { "MPlayer", "VLC", "Smplayer", "bomi" }
+    layout = awful.layout.suit.max,
+    class = { "MPlayer", "VLC", "Smplayer", "bomi", "mpv", "Kodi"}
   },
   {
     name = "s:lack",
@@ -264,6 +308,15 @@ tyrannical.properties.size_hints_honor = {
 
 --}}}
 
+-- {{{ Wallpaper
+if beautiful.wallpaper then
+  for s = 1, screen.count() do
+    gears.wallpaper.maximized(beautiful.wallpaper, s, true)
+  end
+end
+-- }}}
+
+
 -- {{{ Menu
 -- Create a laucher widget and a main menu
 local myawesomemenu = {
@@ -292,24 +345,24 @@ menu = mymainmenu })
 -- }}}
 
 -- {{{ Naughty log notify
-print("[awesome] Enable naughty log notify")
---ilog = lognotify{
---   logs = {
---      mpd = { file = os.getenv("HOME").."/.mpd/log", ignore = {"player_thread: played"} },
---      pacman = { file = "/var/log/pacman.log", },
---      kernel = { file = "/var/log/kernel.log", ignore = {"Mark"} },
---      awesome = { file = awful.util.getdir("config").."/log", ignore = {"[awesome]"} },
---   },
---   interval = 1,
---   naughty_timeout = 15
---}
---ilog:start()
--- }}}
-
--- Transparent notifications
+-- print("[awesome] Enable naughty log notify")
+-- ilog = lognotify{
+--    logs = {
+--       mpd = { file = os.getenv("HOME").."/.mpd/log", ignore = {"player_thread: played"} },
+--       pacman = { file = "/var/log/pacman.log", },
+--       kernel = { file = "/var/log/kernel.log", ignore = {"Mark"} },
+--       awesome = { file = awful.util.getdir("config").."/log", ignore = {"[awesome]"} },
+--    },
+--    interval = 1,
+--    naughty_timeout = 15
+-- }
+-- ilog:start()
+ -- Transparent notifications
 naughty.config.presets.normal.opacity = 0.8
 naughty.config.presets.low.opacity = 0.8
 naughty.config.presets.critical.opacity = 0.8
+-- }}}
+
 
 -- {{{ Vicious and MPD
 print("[awesome] initialize vicious")
@@ -380,25 +433,68 @@ vicious.register(batwidget, vicious.widgets.bat, "$1$2% $3h", 7, "BAT0")
 
 --{{{ Pulseaudio
 volicon = wibox.widget.imagebox(beautiful.widget_vol)
-volumewidget = lain.widgets.alsa({
-    settings = function()
-        if volume_now.status == "off" then
-            volicon:set_image(beautiful.widget_vol_mute)
-        elseif tonumber(volume_now.level) == 0 then
-            volicon:set_image(beautiful.widget_vol_no)
-        elseif tonumber(volume_now.level) <= 50 then
-            volicon:set_image(beautiful.widget_vol_low)
-        else
-            volicon:set_image(beautiful.widget_vol)
-        end
-
-        widget:set_text(" " .. volume_now.level .. "% ")
+myvolumebar = lain.widgets.alsabar({
+  ticks  = true,
+  width  = 40,
+  height = 10,
+  colors = {
+    background = "#383838",
+    unmute     = "#80CCE6",
+    mute       = "#FF9F9F"
+  },
+  notifications = {
+    font_size = "12",
+    bar_size  = 32
+  },
+  settings = function()
+    if volume_now.status == "off" then
+      volicon:set_image(beautiful.widget_vol_mute)
+    elseif tonumber(volume_now.level) == 0 then
+      volicon:set_image(beautiful.widget_vol_no)
+    elseif tonumber(volume_now.level) <= 60 then
+      volicon:set_image(beautiful.widget_vol_low)
+    else
+      volicon:set_image(beautiful.widget_vol)
     end
+  end
 })
+alsamargin = wibox.layout.margin(myvolumebar.bar, 5, 8, 40)
+wibox.layout.margin.set_top(alsamargin, 6)
+wibox.layout.margin.set_bottom(alsamargin, 6)
+volumewidget = wibox.widget.background(alsamargin)
+
+local function alsa_volume(delta)
+  awful.util.spawn("amixer -q set Master " .. delta)
+  vicious.force({ volumewidget, })
+end
+
+local function alsa_toggle()
+  awful.util.spawn("amixer set Master 1+ toggle", false)
+  -- awful.util.spawn("amixer sset Master toggle", false)
+  vicious.force({ volumewidget, })
+end
+
+volumewidget:buttons(awful.util.table.join(
+  awful.button({ }, 1, function() awful.util.spawn(terminal .. " -e alsamixer") end), --left click
+  awful.button({ }, 2, function() alsa_toggle() end),
+  awful.button({ }, 4, function() alsa_volume("2db+") end), -- scroll up
+  awful.button({ }, 5, function() alsa_volume("2db-") end))) -- scroll down
+
+-- local function pulse_volume(delta)
+--   vicious.contrib.pulse.add(delta, "alsa_output.pci-0000_00_1b.0.analog-stereo")
+--   vicious.force({ pulsewidget, pulsebar})
+-- end
+
+-- local function pulse_toggle()
+--   vicious.contrib.pulse.toggle("alsa_output.pci-0000_00_1b.0.analog-stereo")
+--   vicious.force({ pulsewidget, pulsebar})
+-- end
+
 -- vicious.register(pulsewidget, vicious.contrib.pulse,
 -- function (widget, args)
 --   return string.format("%.f%%", args[1])
 -- end, 7, "alsa_output.pci-0000_00_1b.0.analog-stereo")
+
 
 -- pulsewidget:buttons(awful.util.table.join(
 --   awful.button({ }, 1, function() awful.util.spawn("pavucontrol") end), --left click
@@ -542,7 +638,7 @@ mpc.attach(wimpc)
 mpdicon:buttons( wimpc:buttons(awful.util.table.join(
 awful.button({ }, 1, function () mpc:toggle_play() mpc:update()      end), -- left click
 awful.button({ }, 2, function () awful.util.spawn("sonata")          end), -- middle click
-awful.button({ }, 3, function () awful.util.spawn("urxvt -e ncmpcpp")end), -- right click
+awful.button({ }, 3, function () awful.util.spawn("urxvt -name ncmpcpp -e ncmpcpp")end), -- right click
 awful.button({ }, 4, function () mpc:seek(5) mpc:update()            end), -- scroll up
 awful.button({ }, 5, function () mpc:seek(-5) mpc:update()           end)  -- scroll down
 )))
@@ -563,7 +659,7 @@ vicious.register(wifiwidget, vicious.widgets.wifi,
     if args["{linp}"] > 0 then
       quality = args["{link}"] / args["{linp}"] * 100
     end
-    wifitooltip:set_text(tooltip)
+    wifitooltip:set_markup(tooltip)
     return args["{ssid}"]
   end, 5, "wlp3s0")
 wifiicon:buttons( wifiwidget:buttons(awful.util.table.join(
@@ -581,10 +677,13 @@ else
 end
 end),
 awful.button({ "Shift" }, 1, function ()
+  local wpa_cmd = terminal .. " -name wicd -e wicd-curses"
+  awful.util.spawn_with_shell(wpa_cmd)
+
 -- restart-auto-wireless is just a script of mine,
 -- which just restart netcfg
-local wpa_cmd = "sudo restart-auto-wireless && notify-send 'wpa_actiond' 'restarted' || notify-send 'wpa_actiond' 'error on restart'"
-awful.util.spawn_with_shell(wpa_cmd)
+-- local wpa_cmd = "sudo restart-auto-wireless && notify-send 'wpa_actiond' 'restarted' || notify-send 'wpa_actiond' 'error on restart'"
+-- awful.util.spawn_with_shell(wpa_cmd)
 end), -- left click
 awful.button({ }, 3, function ()  vicious.force{wifiwidget} end) -- right click
 )))
@@ -776,7 +875,9 @@ local globalkeys = awful.util.table.join(
          awful.client.focus.byidx(-1)
          if client.focus then client.focus:raise() end
       end),
-  -- awful.key({ modkey,           }, "w",       function() mymainmenu:show()        end),
+  awful.key({ modkey, "Shift"   }, "w", function() mymainmenu:show()        end),
+  awful.key({ modkey,           }, "w", function () awful.util.spawn(dwinshow) end),
+
 
   -- Layout manipulation
   awful.key({ modkey, "Shift"   }, "j", function () awful.client.swap.byidx(  1)    end),
@@ -866,9 +967,9 @@ local globalkeys = awful.util.table.join(
 --   awful.key({ }, "XF86AudioRaiseVolume", function () pulse_volume(5) end),
 --   awful.key({ }, "XF86AudioLowerVolume", function () pulse_volume(-5)end),
 --   awful.key({ }, "XF86AudioMute",        function () pulse_toggle()  end),
-  awful.key({ }, "XF86AudioRaiseVolume", function () awful.util.spawn("amixer -q set Master 2dB+") end),
-  awful.key({ }, "XF86AudioLowerVolume", function () awful.util.spawn("amixer -q set Master 2dB-") end),
-  awful.key({ }, "XF86AudioMute",        function () awful.util.spawn("amixer set Master 1+ toggle")  end),
+  awful.key({ }, "XF86AudioRaiseVolume", function () alsa_volume("2dB+") end),
+  awful.key({ }, "XF86AudioLowerVolume", function () alsa_volume("2dB-") end),
+  awful.key({ }, "XF86AudioMute",        function () alsa_toggle() end),
 
 
   -- Calculator
@@ -883,6 +984,8 @@ local globalkeys = awful.util.table.join(
   -- Menubar
   -- awful.key({ modkey }, "r", function() menubar.show() end),
   awful.key({ modkey }, "r", function() awful.util.spawn('supermenu') end),
+  -- awful.key({ modkey }, "r", function ()  awful.util.spawn(dmenurun) end),
+
   -- awful.key({ modkey }, "r", function() awful.util.spawn('urxvt -name bashrun -e sh -c "/bin/zsh -i -t" ') end),
   -- awful.key({ modkey }, "g", function () mydmenu:show() end),
   -- awful.key({ modkey }, "r",
@@ -1016,21 +1119,21 @@ awful.rules.rules = {
     { rule_any = { class = { "Zathura", "Epdfview", "Remmina", "Bottlechooser.rb", "Evince", "GV"} },
       properties = { floating = true } },
     -- media
-    { rule_any = { class = { "Smplayer", "MPlayer", "Deadbeef", "gtkpod", "gpodder" } },
-      properties = { floating = true },
-      callback = function(c)
-              awful.client.movetotag(tags[mouse.screen][7], c)
-              awful.tag.viewonly(tags[mouse.screen][7])
-      end},
+    { rule_any = { class = { "Smplayer", "MPlayer", "mpv", "Deadbeef", "gtkpod", "gpodder" } },
+      properties = { floating = true }},
+    --   callback = function(c)
+    --           awful.client.movetotag(tags[mouse.screen][7], c)
+    --           awful.tag.viewonly(tags[mouse.screen][7])
+    --   end},
     { rule_any = { class = { "Dxtime", "Zim", "pinentry", "gimp", "Synapse", "TogglDesktop", "GenieSQL" } },
       properties = { floating = true } },
-    { rule_any = { class = { "Gvim", "Anjuta", "Emacs" } },
-      properties = { tag = tags[1][2], switchtotag = true } },
-    { rule_any = { class = { "Firefox", "Iron", "Opera", "luakit", "Uzbl-core" } },
-      callback = function(c)
-              awful.client.movetotag(tags[mouse.screen][3], c)
-              awful.tag.viewonly(tags[mouse.screen][3])
-      end},
+    -- { rule_any = { class = { "Gvim", "Anjuta", "Emacs" } },
+    --   properties = { tag = tags[1][2], switchtotag = true } },
+    -- { rule_any = { class = { "Firefox", "Iron", "Opera", "luakit", "Uzbl-core" } },
+    --   callback = function(c)
+    --           awful.client.movetotag(tags[mouse.screen][3], c)
+    --           awful.tag.viewonly(tags[mouse.screen][3])
+    --   end},
     -- this is flash
     { rule_any = { name = { "plugin-container" }, class = { "Exe" } },
       properties = { floating = true },
@@ -1047,11 +1150,11 @@ awful.rules.rules = {
       -- thunderbird
     -- { rule = { class = "URxvt" },
     --   properties = { tag = tags[1][1], switchtotag = true } },
-    { rule = { class = "Thunderbird" },
-      properties = { tag = tags[1][3] } },
-    { rule_any = { class = { "Skype", "Pidgin" } },
-      properties = { switchtotag = true, tag = tags[1][4] },
-      callback = function(c) awful.client.movetotag(tags[mouse.screen][5], c) end},
+    -- { rule = { class = "Thunderbird" },
+    --   properties = { tag = tags[1][3] } },
+    -- { rule_any = { class = { "Skype", "Pidgin" } },
+    --   properties = { switchtotag = true, tag = tags[1][4] },
+      -- callback = function(c) awful.client.movetotag(tags[mouse.screen][5], c) end},
     { rule = { class = "Pidgin", role = "buddy_list" },
       properties = {switchtotag = true, floating=true,
                     maximized_vertical=true, maximized_horizontal=false },
@@ -1091,17 +1194,17 @@ awful.rules.rules = {
     { rule = { class = "Skype"},
       except = { name = "Chat" },
       properties = { floating = true } },
-    { rule_any = { class = { "Vmware", "VirtualBox", "Qemu-system-x86_64" } },
-      properties = { tag = tags[1][5] } },
+    -- { rule_any = { class = { "Vmware", "VirtualBox", "Qemu-system-x86_64" } },
+    --   properties = { tag = tags[1][5] } },
       -- office
-    { rule_any = { class = { "libreoffice-startcenter",  "libreoffice-impress" }, name = { "PowerPoint % [~]" }  },
-      properties = { tag = tags[1][7] } },
+    -- { rule_any = { class = { "libreoffice-startcenter",  "libreoffice-impress" }, name = { "PowerPoint % [~]" }  },
+    --   properties = { tag = tags[1][7] } },
       -- dia
-    { rule = { class = "Dia", role = "diagram_window" },
-      properties = { tag = tags[1][8], fullscreen = true } },
-    { rule = { class = "Dia", role = "toolbox_window" },
-      properties = { tag = tags[1][8], fullscreen = true },
-      callback = function(c) c.ontop = true end},
+    -- { rule = { class = "Dia", role = "diagram_window" },
+    --   properties = { tag = tags[1][8], fullscreen = true } },
+    -- { rule = { class = "Dia", role = "toolbox_window" },
+    --   properties = { tag = tags[1][8], fullscreen = true },
+    --   callback = function(c) c.ontop = true end},
     { rule = { class = "scratchpad" },
       properties = { floating = true } },
     { rule = { class = "pinentry" },
