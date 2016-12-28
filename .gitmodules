@@ -13,3 +13,6 @@
 [submodule "tyrannical"]
 	path = tyrannical
 	url = https://github.com/Elv13/tyrannical.git
+[submodule "collision"]
+	path = collision
+	url = https://github.com/Elv13/collision
