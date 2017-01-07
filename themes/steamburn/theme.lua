@@ -5,14 +5,17 @@
      github.com/copycat-killer       
                                      
 --]]
+local xresources = require("beautiful").xresources
+local xrdb = xresources.get_current_theme()
+local dpi = xresources.apply_dpi
 
-theme                               = {}
+local theme                               = {}
 
 themes_dir                          = os.getenv("HOME") .. "/.config/awesome/themes/steamburn"
 theme.wallpaper                     = themes_dir .. "/wall.png"
 
 -- theme.font                          = "aquafont 14"
-theme.font                          = "aquafont 10"
+theme.font                          = "aquafont 9"
 theme.fg_normal                     = "#e2ccb0"
 theme.fg_focus                      = "#d88166"
 theme.fg_urgent                     = "#CC9393"
@@ -20,6 +23,7 @@ theme.bg_normal                     = "#140c0b"
 theme.bg_focus                      = "#140c0b"
 theme.bg_urgent                     = "#2a1f1e"
 theme.bg_systray                    = "#d6d6d6"
+theme.useless_gap                   = 3
 theme.border_width                  = 1
 theme.border_normal                 = "#302627"
 theme.border_focus                  = "#c2745b"
@@ -28,8 +32,8 @@ theme.taglist_fg_focus              = "#D8D782"
 theme.taglist_fg_focus              = "#d88166"
 theme.tasklist_bg_focus             = "#140c0b"
 theme.tasklist_fg_focus             = "#d88166"
-theme.menu_eight                   = "12"
-theme.menu_width                    = "140"
+theme.menu_height                   = dpi(12)
+theme.menu_width                    = dpi(140)
 
 theme.layout_txt_tile               = "[t]"
 theme.layout_txt_tileleft           = "[l]"
@@ -43,6 +47,9 @@ theme.layout_txt_max                = "[m]"
 theme.layout_txt_fullscreen         = "[F]"
 theme.layout_txt_magnifier          = "[M]"
 theme.layout_txt_floating           = "[|]"
+
+theme.tooltip_fg = theme.fg_normal
+theme.tooltip_bg = theme.bg_normal
 
 theme.submenu_icon                  = themes_dir .. "/icons/submenu.png"
 theme.taglist_squares_sel           = themes_dir .. "/icons/square_sel.png"
