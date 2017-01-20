@@ -22,10 +22,10 @@ local wibox       = require("wibox")
 -- Theme handling library
 local beautiful   = require("beautiful")
 -- Notification library
--- local _dbus       = dbus
--- dbus              = nil
+local _dbus       = dbus
+dbus              = nil
 local naughty     = require("naughty")
--- dbus              = _dbus
+dbus              = _dbus
 local menubar     = require("menubar")
 local hotkeys_popup = require("awful.hotkeys_popup").widget
 -- widget library
@@ -39,8 +39,8 @@ local markup      = require("utils.markup")
 -- scan for wlan accesspoints using iwlist
 local iwlist      = require("utils.iwlist")
 -- MPD widget based on mpd.lua
--- local wimpd       = require("utils.wimpd")
--- local mpc         = wimpd.new()
+local wimpd       = require("utils.wimpd")
+local mpc         = wimpd.new()
 local scratch     = require("scratch")
 local dmenu       = require("dmenu")
 local lain        = require("lain")
@@ -689,35 +689,36 @@ iowidget:buttons( awful.button({ }, 1, function () awful.spawn(terminal .. " -e 
 --}}}
 
 -- {{{ MPD
--- local wimpc = wibox.widget.textbox()
+local wimpc = wibox.widget.textbox()
 local mpdicon = wibox.widget.imagebox(beautiful.widget_music)
--- mpc.attach(wimpc)
-local mpdwidget = lain.widgets.mpd({
-    settings = function()
-        if mpd_now.state == "play" then
-            artist = " " .. mpd_now.artist .. " "
-            title  = mpd_now.title  .. " "
-            mpdicon:set_image(beautiful.widget_music_on)
-        elseif mpd_now.state == "pause" then
-            artist = " mpd "
-            title  = "paused "
-        else
-            artist = ""
-            title  = ""
-            mpdicon:set_image(beautiful.widget_music)
-        end
+mpc.attach(wimpc)
+-- mpdicon = wibox.widget.imagebox(beautiful.widget_music)
+-- mpdwidget = lain.widgets.mpd({
+--     settings = function()
+--         if mpd_now.state == "play" then
+--             artist = " " .. mpd_now.artist .. " "
+--             title  = mpd_now.title  .. " "
+--             mpdicon:set_image(beautiful.widget_music_on)
+--         elseif mpd_now.state == "pause" then
+--             artist = " mpd "
+--             title  = "paused "
+--         else
+--             artist = ""
+--             title  = ""
+--             mpdicon:set_image(beautiful.widget_music)
+--         end
 
-        widget:set_markup(markup2("#EA6F81", artist) .. title)
-    end
-})
+--         widget:set_markup(markup2("#EA6F81", artist) .. title)
+--     end
+-- })
 
 -- Register Buttons in both widget
-mpdicon:buttons( mpdwidget:buttons(awful.util.table.join(
-awful.button({ }, 1, function () awful.spawn("mpc toggle")      end), -- left click
+mpdicon:buttons( wimpc:buttons(awful.util.table.join(
+awful.button({ }, 1, function () mpc:toggle_play() mpc:update()      end), -- left click
 awful.button({ }, 2, function () awful.spawn("sonata")          end), -- middle click
-awful.button({ }, 3, function () awful.spawn("urxvt -name ncmpcpp -e ncmpcpp")end) -- right click
--- awful.button({ }, 4, function () mpc:seek(5) mpc:update()            end), -- scroll up
--- awful.button({ }, 5, function () mpc:seek(-5) mpc:update()           end)  -- scroll down
+awful.button({ }, 3, function () awful.spawn("urxvt -name ncmpcpp -e ncmpcpp")end), -- right click
+awful.button({ }, 4, function () mpc:seek(5) mpc:update()            end), -- scroll up
+awful.button({ }, 5, function () mpc:seek(-5) mpc:update()           end)  -- scroll down
 )))
 -- }}}
 
@@ -891,6 +892,7 @@ awful.screen.connect_for_each_screen(function(s)
 
     -- Create the wibox
     s.mystatusbox = awful.wibar({ position = "bottom", screen = s })
+    local layout = wibox.layout.fixed.horizontal,
 
     -- Add widgets to the wibox
     s.mystatusbox:setup {
@@ -913,13 +915,15 @@ awful.screen.connect_for_each_screen(function(s)
             netbg,
             arrr_ld,
         },
+        {
+            layout = wibox.layout.fixed.horizontal,
+        },
         { -- Right widgets
             layout = wibox.layout.fixed.horizontal,
-            arrl_ld,
-            mpdicon,
-            arrl_dl,
-            mpdwidget
-            -- wimpc,
+            -- arrl_ld,
+            -- mpdicon,
+            -- arrl_dl,
+            wimpc,
         }
     }
 
@@ -1106,9 +1110,9 @@ local globalkeys = awful.util.table.join(
       awful.spawn("dbus-send / com.gnome.mplayer.Play") -- if state is play it pause
     end
   end),
-  awful.key({ }, "XF86AudioPlay", function () awful.spawn("mpc toggle") end),
-  awful.key({ }, "XF86AudioNext", function () awful.spawn("mpc next") end),
-  awful.key({ }, "XF86AudioPrev", function () awful.spawn("mpc prev") end),
+  awful.key({ }, "XF86AudioPlay", function () mpc:toggle_play() mpc:update() end),
+  awful.key({ }, "XF86AudioNext", function () mpc:next()        mpc:update() end),
+  awful.key({ }, "XF86AudioPrev", function () mpc:previous()    mpc:update() end),
 
   -- use a systemd.path to automatically upload this image to my server and copy
   -- the public link to clipboard
