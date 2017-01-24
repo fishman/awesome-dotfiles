@@ -22,10 +22,10 @@ local wibox       = require("wibox")
 -- Theme handling library
 local beautiful   = require("beautiful")
 -- Notification library
-local _dbus       = dbus
-dbus              = nil
+-- local _dbus       = dbus
+-- dbus              = nil
 local naughty     = require("naughty")
-dbus              = _dbus
+-- dbus              = _dbus
 local menubar     = require("menubar")
 local hotkeys_popup = require("awful.hotkeys_popup").widget
 -- widget library
@@ -44,9 +44,12 @@ local mpc         = wimpd.new()
 local scratch     = require("scratch")
 local dmenu       = require("dmenu")
 local lain        = require("lain")
+local lain_icons_dir = require("lain.helpers").icons_dir
 markup2 = lain.util.markup
 -- load the 'run or raise' function
 local ror         = require("aweror")
+local radical     = require("radical")
+
 
 -- require("revelation")
 
@@ -119,7 +122,7 @@ local modkey2   = "Mod1"
 local icon_path = awful.util.getdir("config").."/icons/"
 
 -- Table of layouts to cover with awful.layout.inc, order matters.
-local layouts = {
+awful.layout.layouts = {
   awful.layout.suit.tile,               -- 1
   awful.layout.suit.tile.left,          -- 2
   awful.layout.suit.tile.bottom,        -- 3
@@ -297,7 +300,7 @@ tyrannical.tags = {
 }
 
 tyrannical.properties.intrusive = {
-  "cmst", "arandr", "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "wicd", "Wicd-client.py", "scratchpad", "bashrun", "mpv", "pinentry", "Nm-connection-editor", "Nm-applet", "nm-openvpn-auth-dialog", "Blueman-manager", "Gcr-prompter", "xev", "Hamster", "Lxpolkit", "maya-calendar", "conmann-gtk", "Connman-gtk"
+  "cmst", "arandr", "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "wicd", "Wicd-client.py", "scratchpad", "bashrun", "mpv", "pinentry", "Nm-connection-editor", "Nm-applet", "nm-openvpn-auth-dialog", "Blueman-manager", "Gcr-prompter", "xev", "Hamster", "Lxpolkit", "maya-calendar", "conmann-gtk", "Connman-gtk", "CMST - Connman System Tray"
 }
 
 tyrannical.properties.ontop = {
@@ -313,7 +316,7 @@ tyrannical.properties.floating = {
 -- }
 
 tyrannical.properties.centered = {
-  "Gxmessage", "Hamster", "connman-gtk", "cmst", "connman-gtk", "Connman-gtk"
+  "Gxmessage", "Hamster", "connman-gtk", "cmst", "connman-gtk", "Connman-gtk", "CMST - Connman System Tray"
 }
 
 -- full_screen_apps = {"dwb", "Opera", "Chromium", "Aurora", "Thunderbird", "evolution", "luakit"}
@@ -385,7 +388,7 @@ naughty.config.presets.critical.opacity = 0.8
 -- }}}
 
 -- Keyboard map indicator and switcher
-mykeyboardlayout = awful.widget.keyboardlayout()
+mykeyboardlayout = awful.widget.keyboardlayout:new()
 
 -- {{{ Vicious and MPD
 print("[awesome] initialize vicious")
@@ -711,6 +714,30 @@ mpc.attach(wimpc)
 --         widget:set_markup(markup2("#EA6F81", artist) .. title)
 --     end
 -- })
+-- Redshift
+
+local rs_on  = lain_icons_dir .. "/redshift/redshift_on.png"
+local rs_off = lain_icons_dir .. "/redshift/redshift_off.png"
+local redshift = lain.widgets.contrib.redshift
+local redshift_widget = wibox.widget.imagebox(rs_on)
+
+redshift:attach(
+   redshift_widget,
+   function ()
+      local rs_on  = lain_icons_dir .. "/redshift/redshift_on.png"
+      local rs_off = lain_icons_dir .. "/redshift/redshift_off.png"
+
+      if redshift:is_active() then
+         redshift_widget:set_image(rs_on)
+      else
+         redshift_widget:set_image(rs_off)
+      end
+   end
+)
+
+redshift_widget:buttons(awful.util.table.join(
+                           awful.button({ }, 1, function () redshift:toggle() end)))
+
 
 -- Register Buttons in both widget
 mpdicon:buttons( wimpc:buttons(awful.util.table.join(
@@ -723,6 +750,32 @@ awful.button({ }, 5, function () mpc:seek(-5) mpc:update()           end)  -- sc
 -- }}}
 
 --{{{ Wifi
+local m = radical.context {
+	style      = radical.style.classic      ,
+	item_style = radical.item.style.classic ,
+	layout     = radical.layout.vertical    }
+local menubar = radical.bar{}
+menubar:connect_signal("button::press",function(data,item,button,mods)
+    if mods.Control then
+        print("Foo menu pressed!",item.text,button,data.rowcount)
+    end
+end)
+
+-- Also work on items
+menubar:add_item{text="bar"}:connect_signal("button::release",function(d,i,b,m)
+    print("bar click released!")
+end)
+
+local menu = radical.context{}
+menu:add_item {text="Screen 1",button1=function(_menu,item,mods) print("Hello World! ") end}
+menu:add_item {text="Screen 9",icon= beautiful.awesome_icon}
+-- menu:add_item {text="Sub Menu",sub_menu = function()
+-- 	local smenu = radical.context{}
+-- 	smenu:add_item{text="item 1"}
+-- 	smenu:add_item{text="item 2"}
+-- 	return smenu
+-- end}
+
 local wifiwidget = wibox.widget.textbox()
 local wifibg     = wibox.container.background(wifiwidget, "#313131")
 local wifiicon   = wibox.widget.imagebox()
@@ -744,27 +797,29 @@ wifiicon:buttons( wifiwidget:buttons(awful.util.table.join(
 awful.button({ "Shift" }, 1, function()
 local networks = iwlist.scan_networks("wlp3s0")
 if #networks > 0 then
-  local msg = {}
-  for i, ap in ipairs(networks) do
-    local line = "<b>ESSID:</b> %s <b>MAC:</b> %s <b>Qual.:</b> %.2f%% <b>%s</b>"
-    local enc = iwlist.get_encryption(ap)
-    msg[i] = line:format(ap.essid, ap.address, ap.quality, enc)
-  end
-  naughty.notify({text = table.concat(msg, "\n")})
+    local msg = {}
+    for i, ap in ipairs(networks) do
+        local line = "<b>ESSID:</b> %s <b>MAC:</b> %s <b>Qual.:</b> %.2f%% <b>%s</b>"
+        local enc = iwlist.get_encryption(ap)
+        msg[i] = line:format(ap.essid, ap.address, ap.quality, enc)
+    end
+    naughty.notify({text = table.concat(msg, "\n")})
 else
 end
-end),
-awful.button({ }, 1, function ()
-  local wpa_cmd = terminal .. " -name wicd -e wicd-curses"
-  awful.spawn_with_shell(wpa_cmd)
+end)
+-- awful.button({ }, 1, function ()
+--     -- local wpa_cmd = terminal .. " -name wicd -e wicd-curses"
+--     -- awful.spawn("cmst")
+--     menubar.show()
 
--- restart-auto-wireless is just a script of mine,
--- which just restart netcfg
--- local wpa_cmd = "sudo restart-auto-wireless && notify-send 'wpa_actiond' 'restarted' || notify-send 'wpa_actiond' 'error on restart'"
--- awful.spawn_with_shell(wpa_cmd)
-end), -- left click
-awful.button({ }, 3, function ()  vicious.force{wifiwidget} end) -- right click
+--     -- restart-auto-wireless is just a script of mine,
+--     -- which just restart netcfg
+--     -- local wpa_cmd = "sudo restart-auto-wireless && notify-send 'wpa_actiond' 'restarted' || notify-send 'wpa_actiond' 'error on restart'"
+--     -- awful.spawn_with_shell(wpa_cmd)
+-- end), -- left click
+-- awful.button({ }, 3, function ()  vicious.force{wifiwidget} end) -- right click
 )))
+wifiwidget:set_menu(menu) -- 3 = right mouse button, 1 = left mouse button
 --}}}
 -- }}}
 
@@ -773,7 +828,7 @@ print("[awesome] initialize wibox")
 
 -- Create a wibox for each screen and add it
 mywibox = {}
-local mystatusbox = {}
+mystatusbox = {}
 local mypromptbox = {}
 local mylayoutbox = {}
 local mytaglist = {}
@@ -869,14 +924,16 @@ awful.screen.connect_for_each_screen(function(s)
             -- end
             wibox.widget.systray(),
             arrl_ld_grey2,
-            mykeyboardlayout,
             wifiicon,
             wifibg,
             arrl_dl,
+            mykeyboardlayout,
             baticon,
             batwidget,
             spr,
             -- right_layout:add(bat2widget)
+            arrl,
+            redshift_widget,
             arrl,
             volicon,
             volumewidget,
@@ -891,41 +948,41 @@ awful.screen.connect_for_each_screen(function(s)
 
 
     -- Create the wibox
-    s.mystatusbox = awful.wibar({ position = "bottom", screen = s })
-    local layout = wibox.layout.fixed.horizontal,
+    -- s.mystatusbox = awful.wibar({ position = "bottom", screen = s })
 
-    -- Add widgets to the wibox
-    s.mystatusbox:setup {
-        layout = wibox.layout.align.horizontal,
-        { -- Left widgets
-            layout = wibox.layout.fixed.horizontal,
-            cpuicon,
-            cpubg,
-            arrr_ld,
-            memicon,
-            memwidget,
-            arrr_dl,
-            ioicon,
-            iobg,
-            arrr_ld,
-            thermalicon,
-            thermalwidget,
-            arrr_dl,
-            neticon,
-            netbg,
-            arrr_ld,
-        },
-        {
-            layout = wibox.layout.fixed.horizontal,
-        },
-        { -- Right widgets
-            layout = wibox.layout.fixed.horizontal,
-            -- arrl_ld,
-            -- mpdicon,
-            -- arrl_dl,
-            wimpc,
-        }
-    }
+    -- -- Add widgets to the wibox
+    -- s.mystatusbox:setup {
+    --     layout = wibox.layout.align.horizontal,
+    --     { -- Left widgets
+    --         layout = wibox.layout.fixed.horizontal,
+    --         cpuicon,
+    --         cpubg,
+    --         arrr_ld,
+    --         memicon,
+    --         memwidget,
+    --         arrr_dl,
+    --         ioicon,
+    --         iobg,
+    --         arrr_ld,
+    --         thermalicon,
+    --         thermalwidget,
+    --         arrr_dl,
+    --         neticon,
+    --         netbg,
+    --         arrr_ld,
+    --     }
+    --     -- ,
+    --     -- {
+    --     --     layout = wibox.layout.fixed.horizontal,
+    --     -- },
+    --     -- { -- Right widgets
+    --     --     layout = wibox.layout.fixed.horizontal,
+    --     --     -- arrl_ld,
+    --     --     -- mpdicon,
+    --     --     -- arrl_dl,
+    --     --     wimpc,
+    --     -- }
+    -- }
 
   -- right_layout2:add(mpcicon)
   -- right_layout2:add(wimpc)
@@ -1100,6 +1157,7 @@ local globalkeys = awful.util.table.join(
   -- awful.key({ }, "XF86MonBrightnessDown", function () awful.spawn("xbacklight -5") end),
   awful.key({ }, "XF86MonBrightnessUp", function () awful.spawn("xcubiclight -i") end),
   awful.key({ }, "XF86MonBrightnessDown", function () awful.spawn("xcubiclight -d -z") end),
+  awful.key({ modkey, "Shift", "Control" }, "r", function () redshift:toggle() end),
 
   -- mpd control
   -- awful.key({ "Shift" }, "space", function () mpc:toggle_play() mpc:update() end),
@@ -1135,7 +1193,7 @@ local globalkeys = awful.util.table.join(
   --   -- os.execute('bash -c \'xrandr --output eDP1 --mode "2560x1600"; sleep 1; xrandr --output eDP1 --mode "1920x1080"\'')
   --   os.execute('bash -c \'~/bin/togglescreen\'')
   -- end),
-  awful.key({ }, "XF86LaunchA", function () awful.spawn("arandr", false) end),
+  awful.key({ }, "XF86LaunchA", function () awful.spawn("autorandr --change", false) end),
   awful.key({ }, "XF86LaunchB", function () awful.spawn("teiler", false) end),
   -- awful.key({ }, "XF86KbdBrightnessDown", function () end),
 
@@ -1149,8 +1207,7 @@ local globalkeys = awful.util.table.join(
 
 
   -- Calculator
-  awful.key({ modkey }, "c", function () awful.spawn("gnome-calculator") end),
-  awful.key({ modkey, "Control" }, "c", function () awful.spawn("qalculate-gtk") end),
+  awful.key({ modkey }, "c", function () awful.spawn("qalculate-gtk") end),
   -- }}}
 
     awful.key({ modkey }, "x",
@@ -1169,7 +1226,6 @@ local globalkeys = awful.util.table.join(
 )
 
 local clientkeys = awful.util.table.join(
-    awful.key({ modkey, "Shift"   }, "r",      function (c) c:redraw()                       end),
     awful.key({ modkey,           }, "y",      function (c) collision.resize.display(c,true) end),
     awful.key({ modkey,           }, "f",
         function (c)
