@@ -16,3 +16,6 @@
 [submodule "collision"]
 	path = collision
 	url = https://github.com/Elv13/collision
+[submodule "lain"]
+  path = lain
+  url = https://github.com/copycat-killer/lain.git
