@@ -19,3 +19,6 @@
 [submodule "lain"]
   path = lain
   url = https://github.com/copycat-killer/lain.git
+[submodule "radical"]
+	path = radical
+	url = https://github.com/Elv13/radical
