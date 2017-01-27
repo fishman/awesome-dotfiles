@@ -51,6 +51,15 @@ local ror         = require("aweror")
 local radical     = require("radical")
 
 
+local wifi="wlp109s0"
+local disk="nvme0n1"
+local lightup="light -A 5"
+local lightdown="light -U 5"
+-- local lightup="xcubiclight -i"
+-- local lightdown="xcubiclight -d -z"
+-- local lightup="xbacklight +5"
+-- local lightdown="xbacklight -5"
+
 -- require("revelation")
 
 -- enable luajit
@@ -237,7 +246,7 @@ tyrannical.tags = {
     init = false,
     layout = awful.layout.suit.max,
     -- exec_once = { spawn_with_systemd("keepass") },
-    class = { "Evince", "GVim", "keepassx", "KeePass2", "libreoffice", "calibre-gui", "Calibre", "Zathura" }
+    class = { "Evince", "GVim", "keepassxc", "KeePass2", "libreoffice", "calibre-gui", "Calibre", "Zathura" }
   },
   {
     name = "6:java",
@@ -300,11 +309,11 @@ tyrannical.tags = {
 }
 
 tyrannical.properties.intrusive = {
-  "cmst", "arandr", "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "wicd", "Wicd-client.py", "scratchpad", "bashrun", "mpv", "pinentry", "Nm-connection-editor", "Nm-applet", "nm-openvpn-auth-dialog", "Blueman-manager", "Gcr-prompter", "xev", "Hamster", "Lxpolkit", "maya-calendar", "conmann-gtk", "Connman-gtk", "CMST - Connman System Tray"
+  "cmst", "arandr", "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "wicd", "Wicd-client.py", "scratchpad", "bashrun", "mpv", "pinentry", "Nm-connection-editor", "Nm-applet", "nm-openvpn-auth-dialog", "Blueman-manager", "Gcr-prompter", "xev", "Hamster", "lxqt-policykit-agent", "Lxpolkit", "maya-calendar", "conmann-gtk", "Connman-gtk", "CMST - Connman System Tray"
 }
 
 tyrannical.properties.ontop = {
-  "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "cmst", "conmann-gtk", "Connman-gtk", "wicd", "Wicd-client.py", "MPlayer", "mpv", "pinentry", "scratchpad", "bashrun", "Gcr-prompter", "Hamster", "Lxpolkit"
+  "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "cmst", "conmann-gtk", "Connman-gtk", "wicd", "Wicd-client.py", "MPlayer", "mpv", "pinentry", "scratchpad", "bashrun", "Gcr-prompter", "Hamster", "lxqt-policykit-agent", "Lxpolkit"
 }
 
 tyrannical.properties.floating = {
@@ -312,7 +321,7 @@ tyrannical.properties.floating = {
 }
 
 -- tyrannical.properties.floating = {
---   "MPlayer", "Mpv", "pinentry", "scratchpad", "bashrun", "idaq.exe", "idaq64.exe", "Tor Browser", "Gcr-prompter", "Gxmessage", "xev", "Hamster", "bashrun", "Lxpolkit", "Zathura", "maya-calendar", "Cantata"
+--   "MPlayer", "Mpv", "pinentry", "scratchpad", "bashrun", "idaq.exe", "idaq64.exe", "Tor Browser", "Gcr-prompter", "Gxmessage", "xev", "Hamster", "bashrun", "lxqt-policykit-agent", "Lxpolkit", "Zathura", "maya-calendar", "Cantata"
 -- }
 
 tyrannical.properties.centered = {
@@ -642,8 +651,8 @@ local netbg     = wibox.container.background(netwidget, "#313131")
 local neticon  = wibox.widget.imagebox()
 neticon:set_image(beautiful.widget_net)
 -- Register widget
-vicious.register(netwidget, vicious.widgets.net, '<span color="#CC9393">${wlp3s0 down_kb}</span> <span color="#7F9F7F">${wlp3s0 up_kb}</span>', 10)
-netwidget:buttons( awful.button({ }, 1, function () awful.spawn(xterminal .. " -e sudo nethogs -d 2 -p wlp3s0") end) )
+vicious.register(netwidget, vicious.widgets.net, '<span color="#CC9393">${' .. wifi .. ' down_kb}</span> <span color="#7F9F7F">${' .. wifi .. ' up_kb}</span>', 10)
+netwidget:buttons( awful.button({ }, 1, function () awful.spawn(xterminal .. " -e sudo nethogs -d 2 -p " .. wifi) end) )
 neticon:buttons( netwidget:buttons() )
 -- }}}
 
@@ -653,7 +662,7 @@ ioicon:set_image(beautiful.widget_hdd)
 ioicon.visible = true
 local iowidget = wibox.widget.textbox()
 local iobg     = wibox.container.background(iowidget, "#313131")
-vicious.register(iowidget, vicious.widgets.dio, "SSD ${sda read_mb}/${sda write_mb}MB", 7)
+vicious.register(iowidget, vicious.widgets.dio, "SSD ${".. disk .. " read_mb}/${" .. disk .. " write_mb}MB", 7)
 -- Register buttons
 iowidget:buttons( awful.button({ }, 1, function () awful.spawn(terminal .. " -e sudo iotop") end) )
 -- }}}
@@ -750,21 +759,21 @@ awful.button({ }, 5, function () mpc:seek(-5) mpc:update()           end)  -- sc
 -- }}}
 
 --{{{ Wifi
-local m = radical.context {
-	style      = radical.style.classic      ,
-	item_style = radical.item.style.classic ,
-	layout     = radical.layout.vertical    }
-local menubar = radical.bar{}
-menubar:connect_signal("button::press",function(data,item,button,mods)
-    if mods.Control then
-        print("Foo menu pressed!",item.text,button,data.rowcount)
-    end
-end)
+-- local m = radical.context {
+-- 	style      = radical.style.classic      ,
+-- 	item_style = radical.item.style.classic ,
+-- 	layout     = radical.layout.vertical    }
+-- local menubar = radical.bar{}
+-- menubar:connect_signal("button::press",function(data,item,button,mods)
+--     if mods.Control then
+--         print("Foo menu pressed!",item.text,button,data.rowcount)
+--     end
+-- end)
 
--- Also work on items
-menubar:add_item{text="bar"}:connect_signal("button::release",function(d,i,b,m)
-    print("bar click released!")
-end)
+-- -- Also work on items
+-- menubar:add_item{text="bar"}:connect_signal("button::release",function(d,i,b,m)
+--     print("bar click released!")
+-- end)
 
 local menu = radical.context{}
 menu:add_item {text="Screen 1",button1=function(_menu,item,mods) print("Hello World! ") end}
@@ -792,10 +801,10 @@ vicious.register(wifiwidget, vicious.widgets.wifi,
     end
     wifitooltip:set_markup(tooltip)
     return args["{ssid}"]
-  end, 5, "wlp3s0")
+  end, 5, wifi)
 wifiicon:buttons( wifiwidget:buttons(awful.util.table.join(
 awful.button({ "Shift" }, 1, function()
-local networks = iwlist.scan_networks("wlp3s0")
+local networks = iwlist.scan_networks(wifi)
 if #networks > 0 then
     local msg = {}
     for i, ap in ipairs(networks) do
@@ -948,41 +957,41 @@ awful.screen.connect_for_each_screen(function(s)
 
 
     -- Create the wibox
-    -- s.mystatusbox = awful.wibar({ position = "bottom", screen = s })
+    s.mystatusbox = awful.wibar({ position = "bottom", screen = s })
 
-    -- -- Add widgets to the wibox
-    -- s.mystatusbox:setup {
-    --     layout = wibox.layout.align.horizontal,
-    --     { -- Left widgets
-    --         layout = wibox.layout.fixed.horizontal,
-    --         cpuicon,
-    --         cpubg,
-    --         arrr_ld,
-    --         memicon,
-    --         memwidget,
-    --         arrr_dl,
-    --         ioicon,
-    --         iobg,
-    --         arrr_ld,
-    --         thermalicon,
-    --         thermalwidget,
-    --         arrr_dl,
-    --         neticon,
-    --         netbg,
-    --         arrr_ld,
-    --     }
-    --     -- ,
-    --     -- {
-    --     --     layout = wibox.layout.fixed.horizontal,
-    --     -- },
-    --     -- { -- Right widgets
-    --     --     layout = wibox.layout.fixed.horizontal,
-    --     --     -- arrl_ld,
-    --     --     -- mpdicon,
-    --     --     -- arrl_dl,
-    --     --     wimpc,
-    --     -- }
-    -- }
+    -- Add widgets to the wibox
+    s.mystatusbox:setup {
+        layout = wibox.layout.align.horizontal,
+        { -- Left widgets
+            layout = wibox.layout.fixed.horizontal,
+            cpuicon,
+            cpubg,
+            arrr_ld,
+            memicon,
+            memwidget,
+            arrr_dl,
+            ioicon,
+            iobg,
+            arrr_ld,
+            thermalicon,
+            thermalwidget,
+            arrr_dl,
+            neticon,
+            netbg,
+            arrr_ld,
+        }
+        ,
+        {
+            layout = wibox.layout.fixed.horizontal,
+        },
+        { -- Right widgets
+            layout = wibox.layout.fixed.horizontal,
+            -- arrl_ld,
+            -- mpdicon,
+            -- arrl_dl,
+            wimpc,
+        }
+    }
 
   -- right_layout2:add(mpcicon)
   -- right_layout2:add(wimpc)
@@ -1151,13 +1160,12 @@ local globalkeys = awful.util.table.join(
 
   -- {{{ Custom Bindings
   -- backlight control
-  -- awful.key({ }, "XF86MonBrightnessUp", function () awful.spawn("light -A 2") end),
-  -- awful.key({ }, "XF86MonBrightnessDown", function () awful.spawn("light -U 2") end),
-  -- awful.key({ }, "XF86MonBrightnessUp", function () awful.spawn("xbacklight +5") end),
-  -- awful.key({ }, "XF86MonBrightnessDown", function () awful.spawn("xbacklight -5") end),
-  awful.key({ }, "XF86MonBrightnessUp", function () awful.spawn("xcubiclight -i") end),
-  awful.key({ }, "XF86MonBrightnessDown", function () awful.spawn("xcubiclight -d -z") end),
+  awful.key({ }, "XF86MonBrightnessUp", function () awful.spawn(lightup) end),
+  awful.key({ }, "XF86MonBrightnessDown", function () awful.spawn(lightdown) end),
   awful.key({ modkey, "Shift", "Control" }, "r", function () redshift:toggle() end),
+
+  -- printscreen
+  awful.key({ }, "Print", function () awful.spawn("maim --select ~/Screenshots/$(date +%F-%T).png") end),
 
   -- mpd control
   -- awful.key({ "Shift" }, "space", function () mpc:toggle_play() mpc:update() end),
@@ -1172,6 +1180,9 @@ local globalkeys = awful.util.table.join(
   awful.key({ }, "XF86AudioNext", function () mpc:next()        mpc:update() end),
   awful.key({ }, "XF86AudioPrev", function () mpc:previous()    mpc:update() end),
 
+  awful.key({ modkey }, "F10", function () mpc:toggle_play() mpc:update() end),
+  awful.key({ modkey }, "F12", function () mpc:next()        mpc:update() end),
+  awful.key({ modkey }, "F11", function () mpc:previous()    mpc:update() end),
   -- use a systemd.path to automatically upload this image to my server and copy
   -- the public link to clipboard
   awful.key({modkey }, "Print", function ()
