@@ -33,7 +33,9 @@ theme.taglist_fg_focus              = "#d88166"
 theme.tasklist_bg_focus             = "#140c0b"
 theme.tasklist_fg_focus             = "#d88166"
 theme.menu_height                   = dpi(12)
+theme.redshift_border               = dpi(6) 
 theme.menu_width                    = dpi(140)
+theme.redshift_bg                   = theme.fg_urgent
 
 theme.layout_txt_tile               = "[t]"
 theme.layout_txt_tileleft           = "[l]"
