@@ -15,6 +15,6 @@
 table5={
     -- ["f"]={"firefox","Firefox"},
     ["a"]={"chromium --user-data-dir=/dev/shm/goo", "Chromium" },
-    ["v"]={"kepass", "KeePass2" },
+    ["v"]={"keepassxc", "KeePassXC" },
     ["s"]={"slack", "slack" }
 }

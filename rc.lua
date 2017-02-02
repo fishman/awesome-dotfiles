@@ -22,10 +22,10 @@ local wibox       = require("wibox")
 -- Theme handling library
 local beautiful   = require("beautiful")
 -- Notification library
--- local _dbus       = dbus
--- dbus              = nil
+local _dbus       = dbus
+dbus              = nil
 local naughty     = require("naughty")
--- dbus              = _dbus
+dbus              = _dbus
 local menubar     = require("menubar")
 local hotkeys_popup = require("awful.hotkeys_popup").widget
 -- widget library
@@ -85,7 +85,7 @@ do
 
         naughty.notify({ preset = naughty.config.presets.critical,
                          title = "Oops, an error happened!",
-                         text = err })
+                         text = tostring(err) })
         in_error = false
     end)
 end
@@ -115,7 +115,7 @@ local browser    = os.getenv("BROWSER") or "firefox"
 local mail       = "thunderbird"
 local editor_cmd = terminal.." -e "..editor
 local configpath = os.getenv("HOME") .. "/.config/awesome/"
-local passmenu = "rofimenu" 
+local passmenu = "rofimenu"
 local ranger = terminal .. " -e ranger"
 local dmenurun = "rofi -show run -font \"snap 10\" -fg \"#D3D3D3\" -bg \"#000000\" -hlfg \"#ffb964\" -hlbg \"#000000\" -o 85"
 local dwinshow = "rofi -show window -font \"snap 10\" -fg \"#D3D3D3\" -bg \"#000000\" -hlfg \"#ffb964\" -hlbg \"#000000\" -o 85"
@@ -359,7 +359,7 @@ local myawesomemenu = {
    { "xrandr", "xrandr --auto" },
    { "arandr", "arandr" },
    { "restart", awesome.restart },
-   { "quit", function() awesome.quit() end}
+   { "quit", awesome.quit }
 }
 
 local mymainmenu = awful.menu({ items = {
@@ -725,28 +725,39 @@ mpc.attach(wimpc)
 -- })
 -- Redshift
 
-local rs_on  = lain_icons_dir .. "/redshift/redshift_on.png"
-local rs_off = lain_icons_dir .. "/redshift/redshift_off.png"
-local redshift = lain.widgets.contrib.redshift
-local redshift_widget = wibox.widget.imagebox(rs_on)
+local markup = lain.util.markup
 
-redshift:attach(
-   redshift_widget,
-   function ()
-      local rs_on  = lain_icons_dir .. "/redshift/redshift_on.png"
-      local rs_off = lain_icons_dir .. "/redshift/redshift_off.png"
+local myredshift = wibox.widget{
+    checked      = false,
+    check_color  = "#EB8F8F",
+    border_color = "#EB8F8F",
+    border_width = 1,
+    shape        = gears.shape.square,
+    widget       = wibox.widget.checkbox
+}
 
-      if redshift:is_active() then
-         redshift_widget:set_image(rs_on)
-      else
-         redshift_widget:set_image(rs_off)
-      end
-   end
+local myredshift_text = wibox.widget{
+    align  = "center",
+    widget = wibox.widget.textbox,
+}
+
+local myredshift_stack = wibox.widget{
+    myredshift,
+    myredshift_text,
+    layout = wibox.layout.stack
+}
+
+lain.widgets.contrib.redshift:attach(
+    myredshift,
+    function (active)
+        if active then
+            myredshift_text:set_markup(markup(beautiful.bg_normal, "<b>R</b>"))
+        else
+            myredshift_text:set_markup(markup(beautiful.fg_normal, "R"))
+        end
+        myredshift.checked = active
+    end
 )
-
-redshift_widget:buttons(awful.util.table.join(
-                           awful.button({ }, 1, function () redshift:toggle() end)))
-
 
 -- Register Buttons in both widget
 mpdicon:buttons( wimpc:buttons(awful.util.table.join(
@@ -775,9 +786,9 @@ awful.button({ }, 5, function () mpc:seek(-5) mpc:update()           end)  -- sc
 --     print("bar click released!")
 -- end)
 
-local menu = radical.context{}
-menu:add_item {text="Screen 1",button1=function(_menu,item,mods) print("Hello World! ") end}
-menu:add_item {text="Screen 9",icon= beautiful.awesome_icon}
+-- local menu = radical.context{}
+-- menu:add_item {text="Screen 1",button1=function(_menu,item,mods) print("Hello World! ") end}
+-- menu:add_item {text="Screen 9",icon= beautiful.awesome_icon}
 -- menu:add_item {text="Sub Menu",sub_menu = function()
 -- 	local smenu = radical.context{}
 -- 	smenu:add_item{text="item 1"}
@@ -828,8 +839,17 @@ end)
 -- end), -- left click
 -- awful.button({ }, 3, function ()  vicious.force{wifiwidget} end) -- right click
 )))
-wifiwidget:set_menu(menu) -- 3 = right mouse button, 1 = left mouse button
+-- wifiwidget:set_menu(menu) -- 3 = right mouse button, 1 = left mouse button
 --}}}
+
+
+
+local connman = require("connman_widget")
+-- override the GUI client.
+connman.gui_client = "cmst"
+--
+--
+--
 -- }}}
 
 -- {{{ Wibox
@@ -943,7 +963,7 @@ awful.screen.connect_for_each_screen(function(s)
             spr,
             -- right_layout:add(bat2widget)
             arrl,
-            redshift_widget,
+            myredshift_stack,
             arrl,
             volicon,
             volumewidget,
@@ -1220,6 +1240,7 @@ local globalkeys = awful.util.table.join(
 
   -- Calculator
   awful.key({ modkey }, "c", function () awful.spawn("qalculate-gtk") end),
+  -- awful.key({ modkey }, "v", function () awful.spawn("keepassxc") end),
   -- }}}
 
     awful.key({ modkey }, "x",
