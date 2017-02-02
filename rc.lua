@@ -929,12 +929,13 @@ awful.screen.connect_for_each_screen(function(s)
         { -- Right widgets
             layout = wibox.layout.fixed.horizontal,
             -- if s == 1 then 
-            arrl_ld_grey,
+            arrl,
             -- end
             wibox.widget.systray(),
-            arrl_ld_grey2,
+            arrl_ld,
             wifiicon,
             wifibg,
+            connman,
             arrl_dl,
             mykeyboardlayout,
             baticon,
