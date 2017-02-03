@@ -849,7 +849,8 @@ local connman = require("connman_widget")
 -- override the GUI client.
 connman.gui_client = "cmst"
 
-local connman_bg     = wibox.container.background(connman, beautiful.bg_grey)
+-- local connman_bg     = wibox.container.background(connman, beautiful.bg_grey)
+local connman_bg = wibox.container.margin(connman, dpi(5), dpi(5), dpi(1), dpi(3))
 --
 --
 --
@@ -955,11 +956,9 @@ awful.screen.connect_for_each_screen(function(s)
             arrl,
             -- end
             wibox.widget.systray(),
-            arrl_ld,
-            wifiicon,
-            wifibg,
-            connman,
-            arrl_dl,
+            connman_bg,
+            -- wifibg,
+            arrl,
             mykeyboardlayout,
             baticon,
             batwidget,
