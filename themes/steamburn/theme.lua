@@ -22,6 +22,7 @@ theme.fg_urgent                     = "#CC9393"
 theme.bg_normal                     = "#140c0b"
 theme.bg_focus                      = "#140c0b"
 theme.bg_urgent                     = "#2a1f1e"
+theme.bg_grey												= "#313131"
 -- theme.bg_systray                    = "#d6d6d6"
 theme.useless_gap                   = dpi(4)
 theme.border_width                  = dpi(1)
@@ -33,7 +34,7 @@ theme.taglist_fg_focus              = "#d88166"
 theme.tasklist_bg_focus             = "#140c0b"
 theme.tasklist_fg_focus             = "#d88166"
 theme.menu_height                   = dpi(12)
-theme.redshift_border               = dpi(6) 
+theme.redshift_border               = dpi(3) 
 theme.menu_width                    = dpi(140)
 theme.redshift_bg                   = theme.fg_urgent
 

@@ -21,6 +21,7 @@ require("awful.autofocus")
 local wibox       = require("wibox")
 -- Theme handling library
 local beautiful   = require("beautiful")
+local dpi         = beautiful.xresources.apply_dpi
 -- Notification library
 local _dbus       = dbus
 dbus              = nil
@@ -548,9 +549,9 @@ myvolumebar = lain.widgets.alsabar({
     end
   end
 })
-alsamargin = wibox.container.margin(myvolumebar.bar, 5, 8, 40)
-wibox.container.margin.set_top(alsamargin, 6)
-wibox.container.margin.set_bottom(alsamargin, 6)
+local alsamargin = wibox.container.margin(myvolumebar.bar, dpi(5), dpi(8), dpi(40))
+wibox.container.margin.set_top(alsamargin, dpi(5))
+wibox.container.margin.set_bottom(alsamargin, dpi(5))
 volumewidget = wibox.container.background(alsamargin)
 
 local function alsa_volume(delta)
@@ -598,7 +599,7 @@ volumewidget:buttons(awful.util.table.join(
 
 -- {{{ CPU usage
 local cpuwidget = wibox.widget.textbox()
-local cpubg     = wibox.container.background(cpuwidget, "#313131")
+local cpubg     = wibox.container.background(cpuwidget, beautiful.bg_grey)
 local cpuicon = wibox.widget.imagebox()
 cpuicon:set_image(beautiful.widget_cpu)
 -- Initialize widgets
@@ -647,7 +648,7 @@ memicon:buttons( cpuwidget:buttons() )
 
 -- {{{ Net usage
 local netwidget = wibox.widget.textbox()
-local netbg     = wibox.container.background(netwidget, "#313131")
+local netbg     = wibox.container.background(netwidget, beautiful.bg_grey)
 local neticon  = wibox.widget.imagebox()
 neticon:set_image(beautiful.widget_net)
 -- Register widget
@@ -661,7 +662,7 @@ local ioicon = wibox.widget.imagebox()
 ioicon:set_image(beautiful.widget_hdd)
 ioicon.visible = true
 local iowidget = wibox.widget.textbox()
-local iobg     = wibox.container.background(iowidget, "#313131")
+local iobg     = wibox.container.background(iowidget, beautiful.bg_grey)
 vicious.register(iowidget, vicious.widgets.dio, "SSD ${".. disk .. " read_mb}/${" .. disk .. " write_mb}MB", 7)
 -- Register buttons
 iowidget:buttons( awful.button({ }, 1, function () awful.spawn(terminal .. " -e sudo iotop") end) )
@@ -731,7 +732,7 @@ local myredshift = wibox.widget{
     checked      = false,
     check_color  = beautiful.redshift_bg,
     border_color = beautiful.bg_normal,
-    border_width = beautiful.redshift_border,
+    paddings     = dpi(4),
     shape        = gears.shape.square,
     widget       = wibox.widget.checkbox
 }
@@ -797,7 +798,7 @@ awful.button({ }, 5, function () mpc:seek(-5) mpc:update()           end)  -- sc
 -- end}
 
 local wifiwidget = wibox.widget.textbox()
-local wifibg     = wibox.container.background(wifiwidget, "#313131")
+local wifibg     = wibox.container.background(wifiwidget, beautiful.bg_grey)
 local wifiicon   = wibox.widget.imagebox()
 local wifitooltip= awful.tooltip({})
 wifitooltip:add_to_object(wifiwidget)
@@ -847,6 +848,8 @@ end)
 local connman = require("connman_widget")
 -- override the GUI client.
 connman.gui_client = "cmst"
+
+local connman_bg     = wibox.container.background(connman, beautiful.bg_grey)
 --
 --
 --
@@ -1007,9 +1010,9 @@ awful.screen.connect_for_each_screen(function(s)
         },
         { -- Right widgets
             layout = wibox.layout.fixed.horizontal,
-            -- arrl_ld,
-            -- mpdicon,
-            -- arrl_dl,
+            arrl_ld,
+            mpdicon,
+            arrl_dl,
             wimpc,
         }
     }
