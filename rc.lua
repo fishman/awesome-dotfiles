@@ -49,7 +49,7 @@ local lain_icons_dir = require("lain.helpers").icons_dir
 markup2 = lain.util.markup
 -- load the 'run or raise' function
 local ror         = require("aweror")
-local radical     = require("radical")
+-- local radical     = require("radical")
 
 
 local wifi="wlp109s0"
@@ -788,13 +788,23 @@ awful.button({ }, 5, function () mpc:seek(-5) mpc:update()           end)  -- sc
 -- 	return smenu
 -- end}
 
-local wifiwidget = wibox.widget.textbox()
-local wifibg     = wibox.container.background(wifiwidget, beautiful.bg_grey)
-local wifiicon   = wibox.widget.imagebox()
-local wifitooltip= awful.tooltip({})
-wifitooltip:add_to_object(wifiwidget)
-wifiicon:set_image(beautiful.widget_net)
-vicious.register(wifiwidget, vicious.widgets.wifi,
+
+local wifiicon
+local wifibg
+local connman = false
+if connman then
+  local connman = require("connman_widget")
+  connman.gui_client = "cmst"
+  local wifi = wibox.container.margin(connman, dpi(5), dpi(5), dpi(1), dpi(3))
+  wifiicon     = wibox.container.background(wifi, beautiful.bg_grey)
+else
+  local wifiwidget = wibox.widget.textbox()
+  local wifitooltip= awful.tooltip({})
+  wifiicon         = wibox.widget.imagebox()
+  wifibg           = wibox.container.background(wifiwidget, beautiful.bg_grey)
+  wifitooltip:add_to_object(wifiwidget)
+  wifiicon:set_image(beautiful.widget_net)
+  vicious.register(wifiwidget, vicious.widgets.wifi,
   function(widget, args)
     local tooltip = ("<b>mode</b> %s <b>chan</b> %s <b>rate</b> %s Mb/s"):format(
     args["{mode}"], args["{chan}"], args["{rate}"])
@@ -805,20 +815,22 @@ vicious.register(wifiwidget, vicious.widgets.wifi,
     wifitooltip:set_markup(tooltip)
     return args["{ssid}"]
   end, 5, wifi)
-wifiicon:buttons( wifiwidget:buttons(awful.util.table.join(
-awful.button({ "Shift" }, 1, function()
-local networks = iwlist.scan_networks(wifi)
-if #networks > 0 then
-    local msg = {}
-    for i, ap in ipairs(networks) do
+  wifiicon:buttons(wifiwidget:buttons(awful.util.table.join(
+  awful.button({ "Shift" }, 1, function()
+    local networks = iwlist.scan_networks(wifi)
+    if #networks > 0 then
+      local msg = {}
+      for i, ap in ipairs(networks) do
         local line = "<b>ESSID:</b> %s <b>MAC:</b> %s <b>Qual.:</b> %.2f%% <b>%s</b>"
         local enc = iwlist.get_encryption(ap)
         msg[i] = line:format(ap.essid, ap.address, ap.quality, enc)
+      end
+      naughty.notify({text = table.concat(msg, "\n")})
+    else
     end
-    naughty.notify({text = table.concat(msg, "\n")})
-else
+  end)
+  )))
 end
-end)
 -- awful.button({ }, 1, function ()
 --     -- local wpa_cmd = terminal .. " -name wicd -e wicd-curses"
 --     -- awful.spawn("cmst")
@@ -830,18 +842,11 @@ end)
 --     -- awful.spawn_with_shell(wpa_cmd)
 -- end), -- left click
 -- awful.button({ }, 3, function ()  vicious.force{wifiwidget} end) -- right click
-)))
 -- wifiwidget:set_menu(menu) -- 3 = right mouse button, 1 = left mouse button
 --}}}
 
 
 
-local connman = require("connman_widget")
--- override the GUI client.
-connman.gui_client = "cmst"
-
--- local connman_bg     = wibox.container.background(connman, beautiful.bg_grey)
-local connman_bg = wibox.container.margin(connman, dpi(5), dpi(5), dpi(1), dpi(3))
 --
 --
 --
