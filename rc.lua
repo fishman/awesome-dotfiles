@@ -310,7 +310,7 @@ tyrannical.tags = {
 }
 
 tyrannical.properties.intrusive = {
-  "cmst", "arandr", "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "wicd", "Wicd-client.py", "scratchpad", "bashrun", "mpv", "pinentry", "Nm-connection-editor", "Nm-applet", "nm-openvpn-auth-dialog", "Blueman-manager", "Gcr-prompter", "xev", "Hamster", "lxqt-policykit-agent", "Lxpolkit", "maya-calendar", "conmann-gtk", "Connman-gtk", "CMST - Connman System Tray"
+  "albert", "cmst", "arandr", "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "wicd", "Wicd-client.py", "scratchpad", "bashrun", "mpv", "pinentry", "Nm-connection-editor", "Nm-applet", "nm-openvpn-auth-dialog", "Blueman-manager", "Gcr-prompter", "xev", "Hamster", "lxqt-policykit-agent", "Lxpolkit", "maya-calendar", "conmann-gtk", "Connman-gtk", "CMST - Connman System Tray"
 }
 
 tyrannical.properties.ontop = {
@@ -318,7 +318,7 @@ tyrannical.properties.ontop = {
 }
 
 tyrannical.properties.floating = {
-  "arandr", "cmst", "Conmann-gtk", "connman-gtk"
+  "albert", "arandr", "cmst", "Conmann-gtk", "connman-gtk"
 }
 
 -- tyrannical.properties.floating = {
