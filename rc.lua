@@ -341,15 +341,6 @@ tyrannical.properties.size_hints_honor = {
 
 --}}}
 
--- {{{ Wallpaper
-if beautiful.wallpaper then
-  for s = 1, screen.count() do
-    gears.wallpaper.maximized(beautiful.wallpaper, s, true)
-  end
-end
--- }}}
-
-
 -- {{{ Menu
 -- Create a laucher widget and a main menu
 local myawesomemenu = {
@@ -360,7 +351,7 @@ local myawesomemenu = {
    { "xrandr", "xrandr --auto" },
    { "arandr", "arandr" },
    { "restart", awesome.restart },
-   { "quit", awesome.quit }
+   { "quit", function () awesome.quit() end }
 }
 
 local mymainmenu = awful.menu({ items = {
