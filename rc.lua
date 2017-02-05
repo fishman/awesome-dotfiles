@@ -14,7 +14,7 @@ print("[awesome] Entered awesome.lua: "..os.date())
 local gears       = require("gears")
 local awful       = require("awful")
 local tyrannical  = require("tyrannical")
-local collision   = require("collision")
+-- local collision   = require("collision")
 awful.rules       = require("awful.rules")
 require("awful.autofocus")
 -- Widget and layout library
@@ -108,7 +108,7 @@ beautiful.tooltip_fg_color = beautiful.fg_normal
 local spawn_with_systemd = function(app)
   return "systemd-run --user --unit '"..app.."' '"..app.."'"
 end
-terminal   = os.getenv("TERMINAL") or "urxvtc"
+terminal   = os.getenv("TERMINAL") or "urxvtc" or "uxterm"
 xterminal   = "uxterm"
 local editor     = os.getenv("EDITOR") or "vim"
 local browser    = os.getenv("BROWSER") or "firefox"
@@ -127,7 +127,7 @@ local dwinshow = "rofi -show window -font \"snap 10\" -fg \"#D3D3D3\" -bg \"#000
 -- I suggest you to remap Mod4 to another key using xmodmap or other tools.
 -- However, you can use another modifier like Mod1, but it may interact with others.
 local modkey    = "Mod4"
-local modkey2   = "Mod1"
+local altkey    = "Mod1"
 local icon_path = awful.util.getdir("config").."/icons/"
 
 -- Table of layouts to cover with awful.layout.inc, order matters.
@@ -414,12 +414,18 @@ spr5px = wibox.widget.imagebox()
 spr5px:set_image(beautiful.spr5px)
 -- {{{ Date and time
 -- Create a textclock widget
+local clockicon = wibox.widget.imagebox(beautiful.widget_clock)
 local mytextclock = wibox.widget.textclock()
-local clockicon = wibox.widget.imagebox()
-clockicon:set_image(beautiful.widget_clock)
--- Register calendar tooltip
--- To use fg_focus, you have to set a different tooltip_fg_color since the
--- default is already beautiful.fg_focus.
+
+-- Calendar
+beautiful.cal = lain.widgets.calendar({
+    attach_to = { clockicon },
+    notification_preset = {
+        font = beautiful.font,
+        fg   = beautiful.fg_normal,
+        bg   = beautiful.bg_normal
+    }
+})
 -- (beautiful.bg_normal in my case)
 cal.register(clockicon, markup.fg(beautiful.fg_focus,"<b>%s</b>"))
 local uptimetooltip = awful.tooltip({})
@@ -966,8 +972,8 @@ awful.screen.connect_for_each_screen(function(s)
             arrl,
             volicon,
             volumewidget,
-            clockicon,
             arrl,
+            clockicon,
             mytextclock,
             arrl_ld,
             s.mylayoutbox,
@@ -1042,12 +1048,19 @@ end
 local globalkeys = awful.util.table.join(
     awful.key({ modkey, "Shift"   }, "s",      hotkeys_popup.show_help,
               {description="show help", group="awesome"}),
-    awful.key({ modkey,           }, "Left",   awful.tag.viewprev,
-              {description = "view previous", group = "tag"}),
-    awful.key({ modkey,           }, "Right",  awful.tag.viewnext,
-              {description = "view next", group = "tag"}),
+    -- Tag browsing
+    -- awful.key({ modkey,           }, "Left",   awful.tag.viewprev,
+    --           {description = "view previous", group = "tag"}),
+    -- awful.key({ modkey,           }, "Right",  awful.tag.viewnext,
+    --           {description = "view next", group = "tag"}),
     awful.key({ modkey,           }, "Escape", awful.tag.history.restore,
               {description = "go back", group = "tag"}),
+
+    -- Non-empty tag browsing
+    awful.key({ modkey }, "Left", function () lain.util.tag_view_nonempty(-1) end,
+              {description = "view  previous nonempty", group = "tag"}),
+    awful.key({ modkey }, "Right", function () lain.util.tag_view_nonempty(1) end,
+              {description = "view  previous nonempty", group = "tag"}),
 
     awful.key({ modkey,           }, "j",
         function ()
@@ -1093,10 +1106,10 @@ local globalkeys = awful.util.table.join(
 
 
     -- move float clients without a mouse
-    awful.key({ modkey, modkey2 }, "h", function () awful.client.moveresize(-20, 0, 0, 0) end),
-    awful.key({ modkey, modkey2 }, "j", function () awful.client.moveresize(0, 20, 0, 0)  end),
-    awful.key({ modkey, modkey2 }, "k", function () awful.client.moveresize(0, -20, 0, 0) end),
-    awful.key({ modkey, modkey2 }, "l", function () awful.client.moveresize(20, 0, 0, 0)  end),
+    awful.key({ modkey, altkey }, "h", function () awful.client.moveresize(-20, 0, 0, 0) end),
+    awful.key({ modkey, altkey }, "j", function () awful.client.moveresize(0, 20, 0, 0)  end),
+    awful.key({ modkey, altkey }, "k", function () awful.client.moveresize(0, -20, 0, 0) end),
+    awful.key({ modkey, altkey }, "l", function () awful.client.moveresize(20, 0, 0, 0)  end),
 
     -- Standard program
     awful.key({ modkey, "Shift"   }, "Return", function () awful.spawn(terminal) end,
@@ -1193,7 +1206,7 @@ local globalkeys = awful.util.table.join(
   -- mpd control
   -- awful.key({ "Shift" }, "space", function () mpc:toggle_play() mpc:update() end),
   -- Smplayer/Gnome mplayer control
-  awful.key({ modkey2 }, "space", function ()
+  awful.key({ altkey }, "space", function ()
     local result = os.execute("smplayer -send-action play_or_pause") -- return 0 on succes
     if result ~= 0 then
       awful.spawn("dbus-send / com.gnome.mplayer.Play") -- if state is play it pause
@@ -1593,7 +1606,7 @@ end)
 client.connect_signal("focus", function(c) c.border_color = beautiful.border_focus end)
 client.connect_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
 
-collision()
+-- collision()
 -- }}}
 
 -- {{{ Timer
