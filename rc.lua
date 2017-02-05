@@ -1237,7 +1237,7 @@ local globalkeys = awful.util.table.join(
 
 
   -- Calculator
-  awful.key({ modkey }, "c", function () awful.spawn("qalculate-gtk") end),
+  awful.key({ modkey, "Control" }, "c", function () awful.spawn("qalculate-gtk") end),
   -- awful.key({ modkey }, "v", function () awful.spawn("keepassxc") end),
   -- }}}
 
