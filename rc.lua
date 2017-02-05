@@ -33,8 +33,6 @@ local hotkeys_popup = require("awful.hotkeys_popup").widget
 local vicious     = require("vicious")
 vicious.contrib   = require("vicious.contrib")
 --local lognotify = require("lognotify")
--- calendar widget
-local cal         = require("utils.cal")
 -- wrapper for pango markup
 local markup      = require("utils.markup")
 -- scan for wlan accesspoints using iwlist
@@ -419,22 +417,13 @@ local mytextclock = wibox.widget.textclock()
 
 -- Calendar
 beautiful.cal = lain.widgets.calendar({
-    attach_to = { clockicon },
+    attach_to = { mytextclock },
     notification_preset = {
         font = beautiful.font,
         fg   = beautiful.fg_normal,
         bg   = beautiful.bg_normal
     }
 })
--- (beautiful.bg_normal in my case)
-cal.register(clockicon, markup.fg(beautiful.fg_focus,"<b>%s</b>"))
-local uptimetooltip = awful.tooltip({})
-uptimetooltip:add_to_object(mytextclock)
-mytextclock:connect_signal("mouse::enter",  function()
-  local args = vicious.widgets.uptime()
-  local text = (" <b>Uptime</b> %dd %dh %dmin "):format(args[1], args[2], args[3])
-  uptimetooltip:set_markup(text)
-end)
 -- }}}
 
 -- Create a wibox for each screen and add it
