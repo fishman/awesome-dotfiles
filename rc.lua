@@ -42,7 +42,6 @@ local iwlist      = require("utils.iwlist")
 -- MPD widget based on mpd.lua
 local wimpd       = require("utils.wimpd")
 local mpc         = wimpd.new()
-local scratch     = require("scratch")
 local dmenu       = require("dmenu")
 local lain        = require("lain")
 local lain_icons_dir = require("lain.helpers").icons_dir
@@ -310,11 +309,11 @@ tyrannical.tags = {
 }
 
 tyrannical.properties.intrusive = {
-  "albert", "cmst", "arandr", "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "wicd", "Wicd-client.py", "scratchpad", "bashrun", "mpv", "pinentry", "Nm-connection-editor", "Nm-applet", "nm-openvpn-auth-dialog", "Blueman-manager", "Gcr-prompter", "xev", "Hamster", "lxqt-policykit-agent", "Lxpolkit", "maya-calendar", "conmann-gtk", "Connman-gtk", "CMST - Connman System Tray"
+  "albert", "cmst", "arandr", "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "wicd", "Wicd-client.py", "bashrun", "mpv", "pinentry", "Nm-connection-editor", "Nm-applet", "nm-openvpn-auth-dialog", "Blueman-manager", "Gcr-prompter", "xev", "Hamster", "lxqt-policykit-agent", "Lxpolkit", "maya-calendar", "conmann-gtk", "Connman-gtk", "CMST - Connman System Tray"
 }
 
 tyrannical.properties.ontop = {
-  "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "cmst", "conmann-gtk", "Connman-gtk", "wicd", "Wicd-client.py", "MPlayer", "mpv", "pinentry", "scratchpad", "bashrun", "Gcr-prompter", "Hamster", "lxqt-policykit-agent", "Lxpolkit"
+  "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "cmst", "conmann-gtk", "Connman-gtk", "wicd", "Wicd-client.py", "MPlayer", "mpv", "pinentry", "bashrun", "Gcr-prompter", "Hamster", "lxqt-policykit-agent", "Lxpolkit"
 }
 
 tyrannical.properties.floating = {
@@ -322,7 +321,7 @@ tyrannical.properties.floating = {
 }
 
 -- tyrannical.properties.floating = {
---   "MPlayer", "Mpv", "pinentry", "scratchpad", "bashrun", "idaq.exe", "idaq64.exe", "Tor Browser", "Gcr-prompter", "Gxmessage", "xev", "Hamster", "bashrun", "lxqt-policykit-agent", "Lxpolkit", "Zathura", "maya-calendar", "Cantata"
+--   "MPlayer", "Mpv", "pinentry", "bashrun", "idaq.exe", "idaq64.exe", "Tor Browser", "Gcr-prompter", "Gxmessage", "xev", "Hamster", "bashrun", "lxqt-policykit-agent", "Lxpolkit", "Zathura", "maya-calendar", "Cantata"
 -- }
 
 tyrannical.properties.centered = {
@@ -336,7 +335,7 @@ tyrannical.settings.block_children_focus_stealing = true --Block popups ()
 -- tyrannical.properties.maximized_horizontal = full_screen_apps
 -- tyrannical.properties.maximized_vertical = full_screen_apps
 tyrannical.properties.size_hints_honor = {
-  xterm = false, aterm = false, scratchpad = false, bashrun = false
+  xterm = false, aterm = false, bashrun = false
 }
 
 --}}}
@@ -912,9 +911,11 @@ mytasklist.buttons = awful.util.table.join(
 screen.connect_signal("property::geometry", set_wallpaper)
 
 awful.screen.connect_for_each_screen(function(s)
+    -- Quake application
+    s.quake = lain.util.quake({ app = terminal, width = 0.9, height = 0.3, horiz = "center" })
+
     -- Wallpaper
     set_wallpaper(s)
-
 
     -- Create a promptbox for each screen
     s.mypromptbox = awful.widget.prompt()
@@ -1085,9 +1086,6 @@ local globalkeys = awful.util.table.join(
 
   -- awful.key({ modkey,           }, "e", revelation),
     awful.key({ modkey,           }, "w", function () awful.spawn(dwinshow) end),
-    awful.key({ modkey,           }, "`", function() scratch("urxvt -name scratchpad -e tmux-scratchpad", "top", "center", 0.90, 0.30) end),
-    -- awful.key({ modkey,           }, "`", function () quakeconsole[mouse.screen]:toggle() end),
-    -- awful.key({ modkey,           }, "`", function () drop(terminal .. " -name scratchpad") end),
     awful.key({ modkey, "Shift"   }, "q", function () awful.spawn("lxsession-logout") end),
     awful.key({ modkey,           }, "Delete", function () awful.spawn("xkill", false) end),
     -- lockscreen
@@ -1135,6 +1133,12 @@ local globalkeys = awful.util.table.join(
                   end
               end,
               {description = "restore minimized", group = "client"}),
+
+    -- Dropdown application
+    awful.key({ modkey, }, "`", function () awful.screen.focused().quake:toggle() end),
+
+    -- Widgets popups
+    awful.key({ altkey, }, "c", function () lain.widgets.calendar.show(7) end),
 
   --}}
     -- Prompt
