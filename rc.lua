@@ -33,8 +33,6 @@ local hotkeys_popup = require("awful.hotkeys_popup").widget
 local vicious     = require("vicious")
 vicious.contrib   = require("vicious.contrib")
 --local lognotify = require("lognotify")
--- wrapper for pango markup
-local markup      = require("utils.markup")
 -- scan for wlan accesspoints using iwlist
 local iwlist      = require("utils.iwlist")
 -- MPD widget based on mpd.lua
