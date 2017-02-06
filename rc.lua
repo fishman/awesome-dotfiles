@@ -1644,39 +1644,18 @@ battimer:start()
 
 -- end here for battery warning
 
--- dofile(configpath .. "50pidgin.lua")
--- Java helper
-awful.spawn("wmname LG3D")
--- awful.spawn("urxvt -name scratchpad")
---vicious.suspend()
---vicious.activate(batwidget)
---vicious.activate(batbar)
---vicious.activate(wifiwidget)
+-- {{{ Autostart windowless processes
+local function run_once(cmd_arr)
+    for _, cmd in ipairs(cmd_arr) do
+        findme = cmd
+        firstspace = cmd:find(" ")
+        if firstspace then
+            findme = cmd:sub(0, firstspace-1)
+        end
+        awful.spawn.with_shell(string.format("pgrep -u $USER -x %s > /dev/null || (%s)", findme, cmd))
+    end
+end
 
-
--- {{{ obsolete
--- local scratch = require("scratch")
--- local quake = require("quake")
--- require("quake")
--- local quakeconsole = {}
--- for s = 1, screen.count() do
---    quakeconsole[s] = quake({ terminal = terminal,
---            name = "scratchpad",
---            height = 0.3,
---            screen = s })
--- end
-
--- mydmenu = dmenu({
---   chromium = "chromium  --force-device-scale-factor=1.8",
---   mc = terminal .. " -e mc",
---   vim = terminal .. " -e vim",
---   ida = "dex ~/.local/share/applications/idaq.desktop",
---   urxvt = function()
---     local matcher = function (c)
---       return awful.rules.match(c, {class = 'scratchpad'})
---     end
---     awful.client.run_or_raise(exec, matcher)
---   end
--- })
+run_once({ "wmname LG3D" }) --, "unclutter -root" })
 -- }}}
 -- vim: foldmethod=marker:filetype=lua:expandtab:shiftwidth=4:tabstop=4:softtabstop=4:textwidth=80
