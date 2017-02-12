@@ -841,7 +841,6 @@ end
 --     -- awful.spawn_with_shell(wpa_cmd)
 -- end), -- left click
 -- awful.button({ }, 3, function ()  vicious.force{wifiwidget} end) -- right click
--- wifiwidget:set_menu(menu) -- 3 = right mouse button, 1 = left mouse button
 --}}}
 
 -- }}}
@@ -884,20 +883,31 @@ awful.screen.connect_for_each_screen(function(s)
         { -- Left widgets
             layout = wibox.layout.fixed.horizontal,
             s.mytaglist,
-            arrr,
+            arrr_dl,
+            mpdicon,
             spr,
             s.mypromptbox,
+            wimpc,
+            -- arrr_dl,
+            -- arrr_ld,
         },
-        s.mytasklist, -- Middle widget
+        -- s.mytasklist, -- Middle widget
+        nil,
         { -- Right widgets
             layout = wibox.layout.fixed.horizontal,
             -- if s == 1 then 
             arrl,
             -- end
             wibox.widget.systray(),
-            connman_bg,
-            -- wifibg,
+            wifiicon,
+            arrl_ld,
+            cpuicon,
+            cpubg,
+            arrl_dl,
+            memicon,
+            memwidget,
             arrl,
+            wifibg,
             mykeyboardlayout,
             baticon,
             batwidget,
@@ -911,27 +921,21 @@ awful.screen.connect_for_each_screen(function(s)
             arrl,
             clockicon,
             mytextclock,
-            arrl_ld,
-            s.mylayoutbox,
+            -- arrl_ld,
+            -- s.mylayoutbox,
         },
     }
 
 
 
-    -- Create the wibox
-    s.mybottomwibox = awful.wibar({ position = "bottom", screen = s })
+    -- Create the bottom wibox
+    s.mybottomwibox = awful.wibar({ position = "bottom", screen = s, border_width = 0, height = 20, bg = beautiful.bg_normal, fg = beautiful.fg_normal })
 
-    -- Add widgets to the wibox
+    -- Add widgets to the bottom wibox
     s.mybottomwibox:setup {
         layout = wibox.layout.align.horizontal,
         { -- Left widgets
             layout = wibox.layout.fixed.horizontal,
-            cpuicon,
-            cpubg,
-            arrr_ld,
-            memicon,
-            memwidget,
-            arrr_dl,
             ioicon,
             iobg,
             arrr_ld,
@@ -940,20 +944,51 @@ awful.screen.connect_for_each_screen(function(s)
             arrr_dl,
             neticon,
             netbg,
-            arrr_ld,
-        }
-        ,
-        {
-            layout = wibox.layout.fixed.horizontal,
+            arrr_ld
         },
+        s.mytasklist, -- Middle widget
         { -- Right widgets
             layout = wibox.layout.fixed.horizontal,
-            arrl_ld,
-            mpdicon,
-            arrl_dl,
-            wimpc,
-        }
+            s.mylayoutbox,
+        },
     }
+
+    -- -- Create the wibox
+    -- s.mybottomwibox = awful.wibar({ position = "bottom", screen = s })
+
+    -- -- Add widgets to the wibox
+    -- s.mybottomwibox:setup {
+    --     layout = wibox.layout.align.horizontal,
+    --     { -- Left widgets
+    --         layout = wibox.layout.fixed.horizontal,
+    --         cpuicon,
+    --         cpubg,
+    --         arrr_ld,
+    --         memicon,
+    --         memwidget,
+    --         arrr_dl,
+    --         ioicon,
+    --         iobg,
+    --         arrr_ld,
+    --         thermalicon,
+    --         thermalwidget,
+    --         arrr_dl,
+    --         neticon,
+    --         netbg,
+    --         arrr_ld,
+    --     }
+    --     ,
+    --     {
+    --         layout = wibox.layout.fixed.horizontal,
+    --     },
+    --     { -- Right widgets
+    --         layout = wibox.layout.fixed.horizontal,
+    --         arrl_ld,
+    --         mpdicon,
+    --         arrl_dl,
+    --         wimpc,
+    --     }
+    -- }
 
   -- right_layout2:add(mpcicon)
   -- right_layout2:add(wimpc)
@@ -1245,6 +1280,8 @@ local clientkeys = awful.util.table.join(
               {description = "move to screen", group = "client"}),
     awful.key({ modkey,           }, "t",      function (c) c.ontop = not c.ontop            end,
               {description = "toggle keep on top", group = "client"}),
+    awful.key({ modkey, "Control" }, "s",      function (c) c.sticky = not c.sticky          end,
+              {description = "toogle sticky", group = "client"}),
     awful.key({ modkey,           }, "n",
         function (c)
             -- The client currently has the input focus, so it cannot be
