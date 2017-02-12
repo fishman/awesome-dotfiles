@@ -41,7 +41,7 @@ local mpc         = wimpd.new()
 local dmenu       = require("dmenu")
 local lain        = require("lain")
 local lain_icons_dir = require("lain.helpers").icons_dir
-markup2 = lain.util.markup
+local markup = lain.util.markup
 -- load the 'run or raise' function
 local ror         = require("aweror")
 -- local radical     = require("radical")
@@ -243,7 +243,7 @@ tyrannical.tags = {
     init = false,
     layout = awful.layout.suit.max,
     -- exec_once = { spawn_with_systemd("keepass") },
-    class = { "Evince", "GVim", "keepassxc", "KeePass2", "libreoffice", "calibre-gui", "Calibre", "Zathura" }
+    class = { "Evince", "GVim", "keepassxc", "KeePass2", "libreoffice", "calibre-gui", "Calibre", "Zathura", "libreoffice-writer" }
   },
   {
     name = "6:java",
@@ -322,7 +322,7 @@ tyrannical.properties.floating = {
 -- }
 
 tyrannical.properties.centered = {
-  "Gxmessage", "Hamster", "connman-gtk", "cmst", "connman-gtk", "Connman-gtk", "CMST - Connman System Tray"
+  "Gxmessage", "Hamster", "connman-gtk", "cmst", "connman-gtk", "Connman-gtk", "CMST - Connman System Tray", "xfce4-appearance-settings"
 }
 
 -- full_screen_apps = {"dwb", "Opera", "Chromium", "Aurora", "Thunderbird", "evolution", "luakit"}
@@ -491,6 +491,7 @@ local batwidget = wibox.widget.textbox()
 local baticon   = wibox.widget.imagebox()
 baticon:set_image(beautiful.widget_battery)
 vicious.register(batwidget, vicious.widgets.bat, "$1$2% $3h", 7, "BAT0")
+batwidget:set_font(beautiful.alt_font)
 
 
 -- baticon = wibox.widget.imagebox(beautiful.widget_battery)
@@ -546,13 +547,12 @@ volumewidget = wibox.container.background(alsamargin)
 
 local function alsa_volume(delta)
   awful.spawn("amixer -q set Master " .. delta)
-  vicious.force({ volumewidget, })
+  myvolumebar.update()
 end
 
 local function alsa_toggle()
   awful.spawn("amixer set Master 1+ toggle", false)
-  -- awful.spawn("amixer sset Master toggle", false)
-  vicious.force({ volumewidget, })
+  myvolumebar.update()
 end
 
 volumewidget:buttons(awful.util.table.join(
