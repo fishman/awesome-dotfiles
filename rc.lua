@@ -306,11 +306,11 @@ tyrannical.tags = {
 }
 
 tyrannical.properties.intrusive = {
-  "albert", "cmst", "arandr", "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "wicd", "Wicd-client.py", "bashrun", "mpv", "pinentry", "Nm-connection-editor", "Nm-applet", "nm-openvpn-auth-dialog", "Blueman-manager", "Gcr-prompter", "xev", "Hamster", "lxqt-policykit-agent", "Lxpolkit", "maya-calendar", "conmann-gtk", "Connman-gtk", "CMST - Connman System Tray"
+  "albert", "cmst", "arandr", "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "wicd", "Wicd-client.py", "bashrun", "mpv", "pinentry", "Nm-connection-editor", "Nm-applet", "nm-openvpn-auth-dialog", "Blueman-manager", "Gcr-prompter", "xev", "Hamster", "lxqt-policykit-agent", "polkit-gnome-authentication-agent-1", "maya-calendar", "conmann-gtk", "Connman-gtk", "CMST - Connman System Tray"
 }
 
 tyrannical.properties.ontop = {
-  "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "cmst", "conmann-gtk", "Connman-gtk", "wicd", "Wicd-client.py", "MPlayer", "mpv", "pinentry", "bashrun", "Gcr-prompter", "Hamster", "lxqt-policykit-agent", "Lxpolkit"
+  "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "cmst", "conmann-gtk", "Connman-gtk", "wicd", "Wicd-client.py", "MPlayer", "mpv", "pinentry", "bashrun", "Gcr-prompter", "Hamster", "lxqt-policykit-agent", "polkit-gnome-authentication-agent-1"
 }
 
 tyrannical.properties.floating = {
@@ -318,7 +318,7 @@ tyrannical.properties.floating = {
 }
 
 -- tyrannical.properties.floating = {
---   "MPlayer", "Mpv", "pinentry", "bashrun", "idaq.exe", "idaq64.exe", "Tor Browser", "Gcr-prompter", "Gxmessage", "xev", "Hamster", "bashrun", "lxqt-policykit-agent", "Lxpolkit", "Zathura", "maya-calendar", "Cantata"
+--   "MPlayer", "Mpv", "pinentry", "bashrun", "idaq.exe", "idaq64.exe", "Tor Browser", "Gcr-prompter", "Gxmessage", "xev", "Hamster", "bashrun", "lxqt-policykit-agent", "polkit-gnome-authentication-agent-1", "Zathura", "maya-calendar", "Cantata"
 -- }
 
 tyrannical.properties.centered = {
@@ -715,8 +715,6 @@ mpc.attach(wimpc)
 --     end
 -- })
 -- Redshift
-
-local markup = lain.util.markup
 
 local myredshift = wibox.widget{
     checked      = false,
