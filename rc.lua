@@ -35,13 +35,12 @@ vicious.contrib   = require("vicious.contrib")
 --local lognotify = require("lognotify")
 -- scan for wlan accesspoints using iwlist
 local iwlist      = require("utils.iwlist")
--- MPD widget based on mpd.lua
-local wimpd       = require("utils.wimpd")
+local wimpd       = require("utils.mpd")
 local mpc         = wimpd.new()
 local dmenu       = require("dmenu")
 local lain        = require("lain")
 local lain_icons_dir = require("lain.helpers").icons_dir
-local markup = lain.util.markup
+local markup      = lain.util.markup
 -- load the 'run or raise' function
 local ror         = require("aweror")
 -- local radical     = require("radical")
@@ -303,18 +302,25 @@ tyrannical.tags = {
     layout = awful.layout.suit.max,
     class = { "slack" }
   },
+  {
+    name = "j:p",
+    position = 12,
+    exclusive = true,
+    init = false,
+    class = { "Anki", "Tagainijisho" }
+  },
 }
 
 tyrannical.properties.intrusive = {
-  "albert", "cmst", "arandr", "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "wicd", "Wicd-client.py", "bashrun", "mpv", "pinentry", "Nm-connection-editor", "Nm-applet", "nm-openvpn-auth-dialog", "Blueman-manager", "Gcr-prompter", "xev", "Hamster", "lxqt-policykit-agent", "polkit-gnome-authentication-agent-1", "maya-calendar", "conmann-gtk", "Connman-gtk", "CMST - Connman System Tray"
+  "albert", "cmst", "arandr", "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "wicd", "Wicd-client.py", "bashrun", "mpv", "pinentry", "Nm-connection-editor", "Nm-applet", "nm-openvpn-auth-dialog", "Blueman-manager", "Gcr-prompter", "xev", "Hamster", "lxqt-policykit-agent", "polkit-gnome-authentication-agent-1", "maya-calendar", "conmann-gtk", "Connman-gtk", "CMST - Connman System Tray", "kanjitomo-reader-Launcher"
 }
 
 tyrannical.properties.ontop = {
-  "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "cmst", "conmann-gtk", "Connman-gtk", "wicd", "Wicd-client.py", "MPlayer", "mpv", "pinentry", "bashrun", "Gcr-prompter", "Hamster", "lxqt-policykit-agent", "polkit-gnome-authentication-agent-1"
+  "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "cmst", "conmann-gtk", "Connman-gtk", "wicd", "Wicd-client.py", "MPlayer", "mpv", "pinentry", "bashrun", "Gcr-prompter", "Hamster", "lxqt-policykit-agent", "polkit-gnome-authentication-agent-1", "kanjitomo-reader-Launcher"
 }
 
 tyrannical.properties.floating = {
-  "albert", "arandr", "cmst", "Conmann-gtk", "connman-gtk"
+  "albert", "arandr", "cmst", "Conmann-gtk", "connman-gtk", "kanjitomo-reader-Launcher"
 }
 
 -- tyrannical.properties.floating = {
@@ -415,7 +421,7 @@ local clockicon = wibox.widget.imagebox(beautiful.widget_clock)
 local mytextclock = wibox.widget.textclock()
 
 -- Calendar
-beautiful.cal = lain.widgets.calendar({
+beautiful.cal = lain.widget.calendar({
     attach_to = { mytextclock },
     notification_preset = {
         font = beautiful.font,
@@ -426,7 +432,7 @@ beautiful.cal = lain.widgets.calendar({
 -- }}}
 
 -- Weather
-beautiful.weather = lain.widgets.weather({
+beautiful.weather = lain.widget.weather({
     city_id = 2911298 
 })
 
@@ -495,7 +501,7 @@ batwidget:set_font(beautiful.alt_font)
 
 
 -- baticon = wibox.widget.imagebox(beautiful.widget_battery)
--- local batwidget = lain.widgets.bat({
+-- local batwidget = lain.widget.bat({
 --     settings = function()
 --         if bat_now.perc == "N/A" then
 --             widget:set_markup(" AC ")
@@ -515,7 +521,7 @@ batwidget:set_font(beautiful.alt_font)
 
 --{{{ Pulseaudio
 volicon = wibox.widget.imagebox(beautiful.widget_vol)
-myvolumebar = lain.widgets.alsabar({
+myvolumebar = lain.widget.alsabar({
   ticks  = true,
   width  = 40,
   height = 10,
@@ -692,28 +698,29 @@ iowidget:buttons( awful.button({ }, 1, function () awful.spawn(terminal .. " -e 
 --}}}
 
 -- {{{ MPD
-local wimpc = wibox.widget.textbox()
+-- local wimpc = wibox.widget.textbox()
+-- local mpdicon = wibox.widget.imagebox(beautiful.widget_music)
+-- mpc.attach(wimpc)
 local mpdicon = wibox.widget.imagebox(beautiful.widget_music)
-mpc.attach(wimpc)
--- mpdicon = wibox.widget.imagebox(beautiful.widget_music)
--- mpdwidget = lain.widgets.mpd({
---     settings = function()
---         if mpd_now.state == "play" then
---             artist = " " .. mpd_now.artist .. " "
---             title  = mpd_now.title  .. " "
---             mpdicon:set_image(beautiful.widget_music_on)
---         elseif mpd_now.state == "pause" then
---             artist = " mpd "
---             title  = "paused "
---         else
---             artist = ""
---             title  = ""
---             mpdicon:set_image(beautiful.widget_music)
---         end
+mpdicon:buttons(awful.util.table.join(awful.button({ }, 1, function () awful.util.spawn_with_shell(musicplr) end)))
+mpd = lain.widget.mpd({
+    settings = function()
+        if mpd_now.state == "play" then
+            artist = " " .. mpd_now.artist .. " "
+            title  = mpd_now.title  .. " "
+            mpdicon:set_image(beautiful.widget_music_on)
+        elseif mpd_now.state == "pause" then
+            artist = " mpd "
+            title  = "paused "
+        else
+            artist = ""
+            title  = ""
+            mpdicon:set_image(beautiful.widget_music)
+        end
 
---         widget:set_markup(markup2("#EA6F81", artist) .. title)
---     end
--- })
+        widget:set_markup(markup.font(beautiful.font, markup("#EA6F81", artist) .. title))
+    end
+})
 -- Redshift
 
 local myredshift = wibox.widget{
@@ -736,7 +743,7 @@ local myredshift_stack = wibox.widget{
     layout = wibox.layout.stack
 }
 
-lain.widgets.contrib.redshift:attach(
+lain.widget.contrib.redshift:attach(
     myredshift,
     function (active)
         if active then
@@ -749,13 +756,13 @@ lain.widgets.contrib.redshift:attach(
 )
 
 -- Register Buttons in both widget
-mpdicon:buttons( wimpc:buttons(awful.util.table.join(
-awful.button({ }, 1, function () mpc:toggle_play() mpc:update()      end), -- left click
+mpdicon:buttons( awful.util.table.join(
+awful.button({ }, 1, function () mpc:toggle_play() mpd.update()      end), -- left click
 awful.button({ }, 2, function () awful.spawn("sonata")          end), -- middle click
 awful.button({ }, 3, function () awful.spawn("urxvt -name ncmpcpp -e ncmpcpp")end), -- right click
-awful.button({ }, 4, function () mpc:seek(5) mpc:update()            end), -- scroll up
-awful.button({ }, 5, function () mpc:seek(-5) mpc:update()           end)  -- scroll down
-)))
+awful.button({ }, 4, function () mpc:seek(5) mpd.update()            end), -- scroll up
+awful.button({ }, 5, function () mpc:seek(-5) mpd.update()           end)  -- scroll down
+))
 -- }}}
 
 --{{{ Wifi
@@ -775,25 +782,15 @@ awful.button({ }, 5, function () mpc:seek(-5) mpc:update()           end)  -- sc
 --     print("bar click released!")
 -- end)
 
--- local menu = radical.context{}
--- menu:add_item {text="Screen 1",button1=function(_menu,item,mods) print("Hello World! ") end}
--- menu:add_item {text="Screen 9",icon= beautiful.awesome_icon}
--- menu:add_item {text="Sub Menu",sub_menu = function()
--- 	local smenu = radical.context{}
--- 	smenu:add_item{text="item 1"}
--- 	smenu:add_item{text="item 2"}
--- 	return smenu
--- end}
-
 
 local wifiicon
 local wifibg
-local connman = false
+local connman = true
 if connman then
   local connman = require("connman_widget")
   connman.gui_client = "cmst"
-  local wifi = wibox.container.margin(connman, dpi(5), dpi(5), dpi(1), dpi(3))
-  wifiicon     = wibox.container.background(wifi, beautiful.bg_grey)
+  wifiicon = wibox.container.margin(connman, dpi(5), dpi(5), dpi(1), dpi(3))
+  -- wifiicon     = wibox.container.background(wifi, beautiful.bg_grey)
 else
   local wifiwidget = wibox.widget.textbox()
   local wifitooltip= awful.tooltip({})
@@ -829,7 +826,7 @@ else
   )))
 end
 -- awful.button({ }, 1, function ()
---     -- local wpa_cmd = terminal .. " -name wicd -e wicd-curses"
+--     d-- local wpa_cmd = terminal .. " -name wicd -e wicd-curses"
 --     -- awful.spawn("cmst")
 --     menubar.show()
 
@@ -883,9 +880,9 @@ awful.screen.connect_for_each_screen(function(s)
             s.mytaglist,
             arrr_dl,
             mpdicon,
+            mpd,
             spr,
             s.mypromptbox,
-            wimpc,
             -- arrr_dl,
             -- arrr_ld,
         },
@@ -1137,7 +1134,7 @@ local globalkeys = awful.util.table.join(
     awful.key({ modkey, }, "`", function () awful.screen.focused().quake:toggle() end),
 
     -- Widgets popups
-    awful.key({ modkey, altkey }, "c", function () lain.widgets.calendar.show(7) end),
+    awful.key({ modkey, altkey }, "c", function () lain.widget.calendar.show(7) end),
     awful.key({ modkey, altkey }, "w", function () if beautiful.weather then beautiful.weather.show(7) end end),
 
   --}}
@@ -1149,7 +1146,8 @@ local globalkeys = awful.util.table.join(
   -- awful.key({ modkey }, "r", function () awful.spawn("mutate") end),
   -- Menubar
   -- awful.key({ modkey }, "r", function() menubar.show() end),
-  awful.key({ modkey }, "r", function() awful.spawn('supermenu') end),
+  -- awful.key({ modkey }, "r", function() awful.spawn('supermenu') end),
+  awful.key({ modkey }, "r", function() awful.spawn('xboomx') end),
   awful.key({ modkey, "Shift" }, "p", function() awful.spawn('rofi-pass') end),
   -- awful.key({ modkey }, "r", function ()  awful.spawn(dmenurun) end),
 
@@ -1191,7 +1189,7 @@ local globalkeys = awful.util.table.join(
   awful.key({ }, "Print", function () awful.spawn("maim --select ~/Screenshots/$(date +%F-%T).png") end),
 
   -- mpd control
-  -- awful.key({ "Shift" }, "space", function () mpc:toggle_play() mpc:update() end),
+  -- awful.key({ "Shift" }, "space", function () mpc:toggle_play() mpd.update() end),
   -- Smplayer/Gnome mplayer control
   awful.key({ altkey }, "space", function ()
     local result = os.execute("smplayer -send-action play_or_pause") -- return 0 on succes
@@ -1199,13 +1197,13 @@ local globalkeys = awful.util.table.join(
       awful.spawn("dbus-send / com.gnome.mplayer.Play") -- if state is play it pause
     end
   end),
-  awful.key({ }, "XF86AudioPlay", function () mpc:toggle_play() mpc:update() end),
-  awful.key({ }, "XF86AudioNext", function () mpc:next()        mpc:update() end),
-  awful.key({ }, "XF86AudioPrev", function () mpc:previous()    mpc:update() end),
+  awful.key({ }, "XF86AudioPlay", function () mpc:toggle_play() mpd.update() end),
+  awful.key({ }, "XF86AudioNext", function () mpc:next()        mpd.update() end),
+  awful.key({ }, "XF86AudioPrev", function () mpc:previous()    mpd.update() end),
 
-  awful.key({ modkey }, "F10", function () mpc:toggle_play() mpc:update() end),
-  awful.key({ modkey }, "F12", function () mpc:next()        mpc:update() end),
-  awful.key({ modkey }, "F11", function () mpc:previous()    mpc:update() end),
+  awful.key({ modkey }, "F10", function () mpc:toggle_play() mpd.update() end),
+  awful.key({ modkey }, "F12", function () mpc:next()        mpd.update() end),
+  awful.key({ modkey }, "F11", function () mpc:previous()    mpd.update() end),
   -- use a systemd.path to automatically upload this image to my server and copy
   -- the public link to clipboard
   awful.key({modkey }, "Print", function ()

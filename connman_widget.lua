@@ -193,7 +193,8 @@ menu:add_item {text="Screen 9",icon= beautiful.awesome_icon}
 -- end}
 
 local widget = wibox.widget.imagebox()
-tooltip = awful.tooltip({ objects = { widget },})
+-- widget.tooltip = awful.tooltip{objects = {widget}, mode = "outside"}
+-- tooltip = awful.tooltip{objects = {widget}, mode = "outside"}
 widget.gui_client = "econnman-bin"
 
 function widget:update_tooltip(mgr)
@@ -203,9 +204,9 @@ function widget:update_tooltip(mgr)
     if service.Type == "wifi" and show_signal[service.State] then
       msg = msg .. "::" .. service.Strength .. "%"
     end
-    self:set_tooltip(msg)
-  else
-    self:set_tooltip(mgr.State)
+    -- self.tooltip = msg
+  -- else
+    -- self.tooltip = mgr.State
   end
 end
 

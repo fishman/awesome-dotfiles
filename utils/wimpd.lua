@@ -130,7 +130,8 @@ function wimpd.new(conf)
         local total_time   = timeformat(status.time:match(":(%d+)"))
         local current_time = timeformat(status.time:match("(%d+):"))
 
-        now_playing = string.format("%s: %s | %s/%s", artist, title, current_time, total_time)
+        -- now_playing = string.format("%s: %s | %s/%s", artist, title, current_time, total_time)
+        now_playing = string.format("%s: %s", artist, title)
 
       end
 
