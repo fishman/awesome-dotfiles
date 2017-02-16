@@ -1147,7 +1147,7 @@ local globalkeys = awful.util.table.join(
   -- Menubar
   -- awful.key({ modkey }, "r", function() menubar.show() end),
   -- awful.key({ modkey }, "r", function() awful.spawn('supermenu') end),
-  awful.key({ modkey }, "r", function() awful.spawn('xboomx') end),
+  awful.key({ modkey }, "r", function() awful.spawn('rofi -sidebar-mode -lines 10 -combi-modi window,drun -show combi -modi combi,run,ssh') end),
   awful.key({ modkey, "Shift" }, "p", function() awful.spawn('rofi-pass') end),
   -- awful.key({ modkey }, "r", function ()  awful.spawn(dmenurun) end),
 
