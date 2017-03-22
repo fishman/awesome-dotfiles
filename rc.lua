@@ -13,7 +13,6 @@ print("[awesome] Entered awesome.lua: "..os.date())
 -- Standard awesome library
 local gears       = require("gears")
 local awful       = require("awful")
-local tyrannical  = require("tyrannical")
 -- local collision   = require("collision")
 awful.rules       = require("awful.rules")
 require("awful.autofocus")
@@ -109,7 +108,8 @@ local editor     = os.getenv("EDITOR") or "vim"
 local browser    = os.getenv("BROWSER") or "firefox"
 local mail       = "thunderbird"
 local editor_cmd = terminal.." -e "..editor
-local configpath = os.getenv("HOME") .. "/.config/awesome/"
+local home       = os.getenv("HOME")
+local configpath = home .. "/.config/awesome/"
 local passmenu = "rofimenu"
 local ranger = terminal .. " -e ranger"
 local dmenurun = "rofi -show run -font \"snap 10\" -fg \"#D3D3D3\" -bg \"#000000\" -hlfg \"#ffb964\" -hlbg \"#000000\" -o 85"
@@ -160,6 +160,31 @@ end
 -- }}}
 -- {{{ Shifty configuration
 -- tag settings
+awful.util.tagnames = { "1:dev", "2:web", "3:im", "4:doc", "5" }
+awful.layout.layouts = {
+    awful.layout.suit.tile,
+    awful.layout.suit.max,
+    awful.layout.suit.tile.left,
+    awful.layout.suit.floating,
+    awful.layout.suit.floating,
+    --awful.layout.suit.fair,
+    --awful.layout.suit.fair.horizontal,
+    --awful.layout.suit.spiral,
+    --awful.layout.suit.spiral.dwindle,
+    --awful.layout.suit.max,
+    --awful.layout.suit.max.fullscreen,
+    --awful.layout.suit.magnifier,
+    --awful.layout.suit.corner.nw,
+    --awful.layout.suit.corner.ne,
+    --awful.layout.suit.corner.sw,
+    --awful.layout.suit.corner.se,
+    --lain.layout.cascade,
+    --lain.layout.cascade.tile,
+    --lain.layout.centerwork,
+    --lain.layout.centerwork.horizontal,
+    --lain.layout.termfair,
+    --lain.layout.termfair.center,
+}
 -- the exclusive in each definition seems to be overhead, but it prevent new on-the-fly tags to be exclusive
 -- the follow function make it easier to swap tags
 
@@ -176,170 +201,6 @@ end
 --     tags[s] = awful.tag(tags.names, s, tags.layout)
 -- end
 
--- First, set some settings
-tyrannical.settings.default_layout = awful.layout.suit.tile.left
-tyrannical.settings.mwfact = 0.66
-
-tyrannical.tags = {
-  {
-    name = "1:dev",
-    position = 1,
-    exclusive = true,
-    init = true,
-    screen = 1,
-    -- gap = 4,
-    layout = awful.layout.suit.tile,
-    class       = {
-      "urxvt" , "aterm", "emacs", "qutebrowser"
-    },
-    match       = {
-      "konsole"
-    }
-  },
-  {
-    name = "2:web",
-    position = 2,
-    init = true,
-    exclusive = true,
-    screen = 1,
-    -- gap = 4,
-    layout = awful.layout.suit.max,
-    exec_once = { browser },
-    class = { "Firefox", "Opera", "Chromium", "Aurora", "birdie",
-    "Thunderbird", "evolution", "Corebird", "Caprine", "vimb" },
-  },
-  {
-    name = "3:im",
-    position = 3,
-    exclusive = true,
-    mwfact = 0.25,
-    -- gap = 4,
-    init = true,
-    layout = awful.layout.suit.tile,
-    exec_once = { "pidgin" },
-    class = { "Kopete", "Pidgin", "gajim" }
-  },
-  -- {
-  --   name = "4:emacs",
-  --   position = 4,
-  --   exclusive = true,
-  --   init = true,
-  --   -- gap = 4,
-  --   layout = awful.layout.suit.tile,
-  --   -- exec_once = { spawn_with_systemd("emacs") },
-  --   class = { "emacs" }
-  -- },
-  {
-    exclusive = true,
-    init = false,
-    layout = awful.layout.suit.tile,
-    class = { "Wine" }
-  },
-  {
-    name = "doc",
-    position = 5,
-    exclusive = false,
-    init = false,
-    layout = awful.layout.suit.max,
-    -- exec_once = { spawn_with_systemd("keepass") },
-    class = { "Evince", "GVim", "keepassxc", "KeePass2", "libreoffice", "calibre-gui", "Calibre", "Zathura", "libreoffice-writer" }
-  },
-  {
-    name = "6:java",
-    position = 6,
-    exclusive = false,
-    init = false,
-    layout = awful.layout.suit.tile,
-    class = { "Eclipse", "NetBeans IDE", "jetbrains%-idea%-ce", "sun-awt-X11-XFramePeer", "jetbrains-idea-ce" }
-  },
-  {
-    name = "d:own",
-    position = 7,
-    exclusive = true,
-    init = false,
-    layout = awful.layout.suit.tile,
-    class = { "gpodder", "JDownloader", "transmission-gtk" }
-  },
-  {
-    name = "s:kype",
-    position = 8,
-    exclusive = true,
-    init = false,
-    layout = awful.layout.suit.tile,
-    class = { "skype" }
-  },
-  {
-    name = "s:pacefm",
-    position = 8,
-    exclusive = true,
-    init = false,
-    layout = awful.layout.suit.tile,
-    -- exec_once = { spawn_with_systemd("pcmanfm") },
-    class = { "pcmanfm", "dolphin", "nautilus", "thunar", "spacefm", "doublecmd"}
-  },
-  {
-    name = "a:udio",
-    position = 10,
-    exclusive = true,
-    init = false,
-    layout = awful.layout.suit.max,
-    class = { "sonata", "ncmpcpp"},
-    match = { "ncmpcpp" }
-  },
-  {
-    name = "v:ideo",
-    position = 11,
-    exclusive = true,
-    init = false,
-    layout = awful.layout.suit.max,
-    class = { "MPlayer", "VLC", "Smplayer", "bomi", "mpv", "Kodi"}
-  },
-  {
-    name = "s:lack",
-    position = 12,
-    exclusive = true,
-    init = false,
-    layout = awful.layout.suit.max,
-    class = { "slack" }
-  },
-  {
-    name = "j:p",
-    position = 12,
-    exclusive = true,
-    init = false,
-    class = { "Anki", "Tagainijisho" }
-  },
-}
-
-tyrannical.properties.intrusive = {
-  "albert", "cmst", "arandr", "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "wicd", "Wicd-client.py", "bashrun", "mpv", "pinentry", "Nm-connection-editor", "Nm-applet", "nm-openvpn-auth-dialog", "Blueman-manager", "Gcr-prompter", "xev", "Hamster", "lxqt-policykit-agent", "polkit-gnome-authentication-agent-1", "maya-calendar", "conmann-gtk", "Connman-gtk", "CMST - Connman System Tray", "kanjitomo-reader-Launcher"
-}
-
-tyrannical.properties.ontop = {
-  "gmrun", "qalculate", "gnome-calculator", "Komprimieren", "cmst", "conmann-gtk", "Connman-gtk", "wicd", "Wicd-client.py", "MPlayer", "mpv", "pinentry", "bashrun", "Gcr-prompter", "Hamster", "lxqt-policykit-agent", "polkit-gnome-authentication-agent-1", "kanjitomo-reader-Launcher"
-}
-
-tyrannical.properties.floating = {
-  "albert", "arandr", "cmst", "Conmann-gtk", "connman-gtk", "kanjitomo-reader-Launcher"
-}
-
--- tyrannical.properties.floating = {
---   "MPlayer", "Mpv", "pinentry", "bashrun", "idaq.exe", "idaq64.exe", "Tor Browser", "Gcr-prompter", "Gxmessage", "xev", "Hamster", "bashrun", "lxqt-policykit-agent", "polkit-gnome-authentication-agent-1", "Zathura", "maya-calendar", "Cantata"
--- }
-
-tyrannical.properties.centered = {
-  "Gxmessage", "Hamster", "connman-gtk", "cmst", "connman-gtk", "Connman-gtk", "CMST - Connman System Tray", "xfce4-appearance-settings"
-}
-
--- full_screen_apps = {"dwb", "Opera", "Chromium", "Aurora", "Thunderbird", "evolution", "luakit"}
-
-tyrannical.settings.group_children = true
-tyrannical.settings.block_children_focus_stealing = true --Block popups ()
--- tyrannical.properties.maximized_horizontal = full_screen_apps
--- tyrannical.properties.maximized_vertical = full_screen_apps
-tyrannical.properties.size_hints_honor = {
-  xterm = false, aterm = false, bashrun = false
-}
 
 --}}}
 
@@ -707,7 +568,7 @@ mpd = lain.widget.mpd({
     settings = function()
         if mpd_now.state == "play" then
             artist = " " .. mpd_now.artist .. " "
-            title  = mpd_now.title  .. " "
+            title  = mpd_now.title:sub(0,10)  .. " "
             mpdicon:set_image(beautiful.widget_music_on)
         elseif mpd_now.state == "pause" then
             artist = " mpd "
@@ -849,6 +710,8 @@ screen.connect_signal("property::geometry", set_wallpaper)
 awful.screen.connect_for_each_screen(function(s)
     -- Quake application
     s.quake = lain.util.quake({ app = terminal, width = 0.9, height = 0.3, horiz = "center" })
+
+    awful.tag(awful.util.tagnames, s, awful.layout.layouts)
 
     -- Wallpaper
     set_wallpaper(s)
@@ -1037,6 +900,10 @@ local globalkeys = awful.util.table.join(
     awful.key({ altkey, "Control" }, "-", function () lain.util.useless_gaps_resize(-1) end),
 
     -- Dynamic tagging
+    awful.key({ modkey, "Shift" }, "n", function () lain.util.add_tag() end),
+    awful.key({ modkey, "Shift" }, "r", function () lain.util.rename_tag() end),
+    awful.key({ modkey, "Shift" }, "d", function () lain.util.delete_tag() end),
+    -- Dynamic tagging
     awful.key({ modkey, "Shift" }, "Left", function () lain.util.move_tag(1) end),   -- move to next tag
     awful.key({ modkey, "Shift" }, "Right", function () lain.util.move_tag(-1) end), -- move to previous tag
     -- Non-empty tag browsing
@@ -1183,7 +1050,7 @@ local globalkeys = awful.util.table.join(
   -- backlight control
   awful.key({ }, "XF86MonBrightnessUp", function () awful.spawn(lightup) end),
   awful.key({ }, "XF86MonBrightnessDown", function () awful.spawn(lightdown) end),
-  awful.key({ modkey, "Shift", "Control" }, "r", function () redshift:toggle() end),
+  awful.key({ modkey, "Shift", "Control" }, "r", function () lain.widget.contrib.redshift:toggle() end),
 
   -- printscreen
   awful.key({ }, "Print", function () awful.spawn("maim --select ~/Screenshots/$(date +%F-%T).png") end),
@@ -1259,7 +1126,8 @@ local globalkeys = awful.util.table.join(
 )
 
 local clientkeys = awful.util.table.join(
-    awful.key({ modkey,           }, "y",      function (c) collision.resize.display(c,true) end),
+    awful.key({ altkey, "Shift"   }, "m",      lain.util.magnify_client                         ),
+    -- awful.key({ modkey,           }, "y",      function (c) collision.resize.display(c,true) end),
     awful.key({ modkey,           }, "f",
         function (c)
             c.fullscreen = not c.fullscreen
@@ -1398,7 +1266,7 @@ awful.rules.rules = {
       }, properties = { floating = true }},
 
     -- Add titlebars to dialogs
-    { rule_any = {type = { "dialog" }
+    { rule_any = { type = { "dialog" }
       }, properties = { titlebars_enabled = true }
     },
     { rule_any = { class = { "Pcmanfm", "Nautilus", "Thunar" } },
@@ -1407,33 +1275,34 @@ awful.rules.rules = {
     { rule_any = { class = { "Xmessage",  "Gxmessage", "Hamster-time-tracker", "cmst", "connman-gtk" } },
       properties = { floating = true },
       callback = awful.placement.centered },
-    { rule_any = { class = { "Zathura", "Epdfview", "Remmina", "Bottlechooser.rb", "Evince", "GV"} },
-      properties = { floating = true } },
+    -- { rule_any = { class = { "Zathura", "Epdfview", "Remmina", "Bottlechooser.rb", "Evince", "GV"} },
+    --   properties = { floating = true } },
     -- media
-    { rule_any = { class = { "Smplayer", "MPlayer", "mpv", "Deadbeef", "gtkpod", "gpodder", "Mpv" } },
-      properties = { floating = true }},
+    { rule_any = { class = { "smplayer", "MPlayer", "mpv", "Deadbeef", "gtkpod", "gpodder", "Mpv" } },
+      properties = { floating = true },
+      callback = function(c) c.ontop = true; c.sticky = true end },
     --   callback = function(c)
     --           awful.client.movetotag(tags[mouse.screen][7], c)
     --           awful.tag.viewonly(tags[mouse.screen][7])
     --   end},
     { rule_any = { class = { "Dxtime", "Zim", "pinentry", "gimp", "Synapse", "TogglDesktop", "GenieSQL", "wicd"} },
       properties = { floating = true } },
-    -- { rule_any = { class = { "Gvim", "Anjuta", "Emacs" } },
-    --   properties = { tag = tags[1][2], switchtotag = true } },
-    -- { rule_any = { class = { "Firefox", "Iron", "Opera", "luakit", "Uzbl-core" } },
-    --   callback = function(c)
-    --           awful.client.movetotag(tags[mouse.screen][3], c)
-    --           awful.tag.viewonly(tags[mouse.screen][3])
-    --   end},
+    { rule_any = { class = { "libreoffice", "keepassxc" } },
+      properties = { tag = screen[mouse.screen].tags[4] } },
+    { rule_any = { class = { "Kodi" } },
+      properties = { tag = screen[mouse.screen].tags[5] } },
+    { rule_any = { class = { "Gvim", "Anjuta", "Emacs" } },
+      properties = { tag = screen[mouse.screen].tags[1], switchtotag = true } },
+    { rule_any = { class = { "wmail", "Firefox", "Iron", "Opera", "luakit", "Uzbl-core" } },
+      properties = { switchtotag = true, tag = screen[mouse.screen].tags[2] } },
     -- this is flash
     { rule_any = { name = { "plugin-container" }, class = { "Exe" } },
       properties = { floating = true },
       callback = function(c)
             c.fullscreen = true
       end},
-    { rule = { class = "Firefox" },
-      except = { instance = "Navigator" },
-      properties = { floating = true } },
+    { rule = { class = "Gimp", role = "gimp-image-window" },
+          properties = { maximized = true } },
     -- { rule = { class = "Firefox", instance = "Navigator" },
     --   properties = { maximize_vertical = true, maximized_horizontal = true } },
     -- { rule = { class = "Iron" },
@@ -1443,8 +1312,12 @@ awful.rules.rules = {
     --   properties = { tag = tags[1][1], switchtotag = true } },
     -- { rule = { class = "Thunderbird" },
     --   properties = { tag = tags[1][3] } },
-    -- { rule_any = { class = { "Skype", "Pidgin" } },
-    --   properties = { switchtotag = true, tag = tags[1][4] },
+    { rule = { class = "Skype"},
+      except = { name = "Chat" },
+      properties = { floating = true } },
+    { rule_any = { class = { "Skype", "Pidgin" } },
+      properties = { switchtotag = true, tag = screen[mouse.screen].tags[3] } },
+    
       -- callback = function(c) awful.client.movetotag(tags[mouse.screen][5], c) end},
     -- { rule = { class = "Pidgin", role = "buddy_list" },
     --   properties = {switchtotag = true, floating=true,
@@ -1482,9 +1355,6 @@ awful.rules.rules = {
     --       end
     --       c:geometry(geometry)
     --   end },
-    { rule = { class = "Skype"},
-      except = { name = "Chat" },
-      properties = { floating = true } },
     -- { rule_any = { class = { "Vmware", "VirtualBox", "Qemu-system-x86_64" } },
     --   properties = { tag = tags[1][5] } },
       -- office
@@ -1496,6 +1366,7 @@ awful.rules.rules = {
     -- { rule = { class = "Dia", role = "toolbox_window" },
     --   properties = { tag = tags[1][8], fullscreen = true },
     --   callback = function(c) c.ontop = true end},
+
     { rule = { class = "scratchpad" },
       properties = { floating = true } },
     { rule = { class = "pinentry" },
