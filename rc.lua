@@ -382,76 +382,116 @@ batwidget:set_font(beautiful.alt_font)
 
 --{{{ Pulseaudio
 volicon = wibox.widget.imagebox(beautiful.widget_vol)
-myvolumebar = lain.widget.alsabar({
-  ticks  = true,
-  width  = 40,
-  height = 10,
-  colors = {
-    background = "#383838",
-    unmute     = "#80CCE6",
-    mute       = "#FF9F9F"
-  },
-  notifications = {
-    font_size = "12",
-    bar_size  = 32
-  },
-  settings = function()
-    if volume_now.status == "off" then
-      volicon:set_image(beautiful.widget_vol_mute)
-    elseif tonumber(volume_now.level) == 0 then
-      volicon:set_image(beautiful.widget_vol_no)
-    elseif tonumber(volume_now.level) <= 60 then
-      volicon:set_image(beautiful.widget_vol_low)
-    else
-      volicon:set_image(beautiful.widget_vol)
+local pulse = true
+if pulse then
+    -- local audio_card = "alsa_output.pci-0000_00_1b.0.analog-stereo"
+    function os.capture(cmd, raw)
+        local f = assert(io.popen(cmd, 'r'))
+        local s = assert(f:read('*a'))
+        f:close()
+        if raw then return s end
+        s = string.gsub(s, '^%s+', '')
+        s = string.gsub(s, '%s+$', '')
+        s = string.gsub(s, '[\n\r]+', ' ')
+        return s
     end
-  end
-})
-local alsamargin = wibox.container.margin(myvolumebar.bar, dpi(5), dpi(8), dpi(40))
-wibox.container.margin.set_top(alsamargin, dpi(5))
-wibox.container.margin.set_bottom(alsamargin, dpi(5))
-volumewidget = wibox.container.background(alsamargin)
 
-local function alsa_volume(delta)
-  awful.spawn("amixer -q set Master " .. delta)
-  myvolumebar.update()
+    local function current_audio_card()
+        return os.capture("pactl list sinks short | grep -i 'RUNNING'| cut -f 2", false)
+    end
+
+    myvolumebar = lain.widget.pulsebar({
+        ticks  = true,
+        width  = 40,
+        height = 10,
+        colors = {
+            background = "#383838",
+            unmute     = "#80CCE6",
+            mute       = "#FF9F9F"
+        },
+        notifications = {
+            font_size = "12",
+            bar_size  = 32
+        },
+        settings = function()
+            if volume_now.muted == "yes" then
+                volicon:set_image(beautiful.widget_vol_mute)
+            elseif tonumber(volume_now.left) == 0 then
+                volicon:set_image(beautiful.widget_vol_no)
+            elseif tonumber(volume_now.left) <= 60 then
+                volicon:set_image(beautiful.widget_vol_low)
+            else
+                volicon:set_image(beautiful.widget_vol)
+            end
+        end
+    })
+    local alsamargin = wibox.container.margin(myvolumebar.bar, dpi(5), dpi(8), dpi(40))
+    wibox.container.margin.set_top(alsamargin, dpi(5))
+    wibox.container.margin.set_bottom(alsamargin, dpi(5))
+    volumewidget = wibox.container.background(alsamargin)
+
+    function pulse_volume(delta)
+        vicious.contrib.pulse.add(delta, current_audio_card())
+        myvolumebar.update()
+    end
+
+    function pulse_toggle()
+        vicious.contrib.pulse.toggle(current_audio_card())
+        myvolumebar.update()
+    end
+
+    volumewidget:buttons(awful.util.table.join(
+    awful.button({ }, 1, function() awful.util.spawn("pavucontrol-qt") end), --left click
+    awful.button({ }, 2, function() pulse_toggle() end),
+    awful.button({ }, 4, function() pulse_volume(5) end), -- scroll up
+    awful.button({ }, 5, function() pulse_volume(-5) end))) -- scroll down
+else
+    myvolumebar = lain.widget.alsabar({
+        ticks  = true,
+        width  = 40,
+        height = 10,
+        colors = {
+            background = "#383838",
+            unmute     = "#80CCE6",
+            mute       = "#FF9F9F"
+        },
+        notifications = {
+            font_size = "12",
+            bar_size  = 32
+        },
+        settings = function()
+            if volume_now.status == "off" then
+                volicon:set_image(beautiful.widget_vol_mute)
+            elseif tonumber(volume_now.level) == 0 then
+                volicon:set_image(beautiful.widget_vol_no)
+            elseif tonumber(volume_now.level) <= 60 then
+                volicon:set_image(beautiful.widget_vol_low)
+            else
+                volicon:set_image(beautiful.widget_vol)
+            end
+        end
+    })
+    local alsamargin = wibox.container.margin(myvolumebar.bar, dpi(5), dpi(8), dpi(40))
+    wibox.container.margin.set_top(alsamargin, dpi(5))
+    wibox.container.margin.set_bottom(alsamargin, dpi(5))
+    volumewidget = wibox.container.background(alsamargin)
+
+    local function alsa_volume(delta)
+        awful.spawn("amixer -q set Master " .. delta)
+        myvolumebar.update()
+    end
+
+    local function alsa_toggle()
+        awful.spawn("amixer set Master 1+ toggle", false)
+        myvolumebar.update()
+    end
+
+    volumewidget:buttons(awful.util.table.join(
+    awful.button({ }, 1, function() awful.spawn(terminal .. " -e alsamixer") end), --left click
+    awful.button({ }, 2, function() alsa_toggle() end),
+    awful.button({ }, 4, function() alsa_volume("2db+") end), -- scroll up
+    awful.button({ }, 5, function() alsa_volume("2db-") end))) -- scroll down
 end
-
-local function alsa_toggle()
-  awful.spawn("amixer set Master 1+ toggle", false)
-  myvolumebar.update()
-end
-
-volumewidget:buttons(awful.util.table.join(
-  awful.button({ }, 1, function() awful.spawn(terminal .. " -e alsamixer") end), --left click
-  awful.button({ }, 2, function() alsa_toggle() end),
-  awful.button({ }, 4, function() alsa_volume("2db+") end), -- scroll up
-  awful.button({ }, 5, function() alsa_volume("2db-") end))) -- scroll down
-
--- local function pulse_volume(delta)
---   vicious.contrib.pulse.add(delta, "alsa_output.pci-0000_00_1b.0.analog-stereo")
---   vicious.force({ pulsewidget, pulsebar})
--- end
-
--- local function pulse_toggle()
---   vicious.contrib.pulse.toggle("alsa_output.pci-0000_00_1b.0.analog-stereo")
---   vicious.force({ pulsewidget, pulsebar})
--- end
-
--- vicious.register(pulsewidget, vicious.contrib.pulse,
--- function (widget, args)
---   return string.format("%.f%%", args[1])
--- end, 7, "alsa_output.pci-0000_00_1b.0.analog-stereo")
-
-
--- pulsewidget:buttons(awful.util.table.join(
---   awful.button({ }, 1, function() awful.spawn("pavucontrol") end), --left click
---   awful.button({ }, 2, function() pulse_toggle() end),
---   awful.button({ }, 4, function() pulse_volume(5) end), -- scroll up
---   awful.button({ }, 5, function() pulse_volume(-5) end))) -- scroll down
-
--- pulsebar:buttons(pulsewidget:buttons())
--- pulseicon:buttons(pulsewidget:buttons())
 --}}}
 
 -- {{{ CPU usage
@@ -1097,12 +1137,12 @@ local globalkeys = awful.util.table.join(
   -- awful.key({ }, "XF86KbdBrightnessDown", function () end),
 
   -- Volume keyboard control
---   awful.key({ }, "XF86AudioRaiseVolume", function () pulse_volume(5) end),
---   awful.key({ }, "XF86AudioLowerVolume", function () pulse_volume(-5)end),
---   awful.key({ }, "XF86AudioMute",        function () pulse_toggle()  end),
-  awful.key({ }, "XF86AudioRaiseVolume", function () alsa_volume("2dB+") end),
-  awful.key({ }, "XF86AudioLowerVolume", function () alsa_volume("2dB-") end),
-  awful.key({ }, "XF86AudioMute",        function () alsa_toggle() end),
+  awful.key({ }, "XF86AudioRaiseVolume", function () pulse_volume(5) end),
+  awful.key({ }, "XF86AudioLowerVolume", function () pulse_volume(-5)end),
+  awful.key({ }, "XF86AudioMute",        function () pulse_toggle()  end),
+  -- awful.key({ }, "XF86AudioRaiseVolume", function () alsa_volume("2dB+") end),
+  -- awful.key({ }, "XF86AudioLowerVolume", function () alsa_volume("2dB-") end),
+  -- awful.key({ }, "XF86AudioMute",        function () alsa_toggle() end),
 
 
   -- Calculator
